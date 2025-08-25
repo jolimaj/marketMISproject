@@ -8,6 +8,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
+import DatePick from '@/Shared/DatePick.vue';
 
 const props = defineProps({
     user: Object,
@@ -15,8 +16,12 @@ const props = defineProps({
 
 const form = useForm({
     _method: 'PUT',
-    name: props.user.name,
+    first_name: props.user.first_name,
+    middle_name: props.user.middle_name,
+    last_name: props.user.last_name,
     email: props.user.email,
+    birthday: props.user.birthday,
+    address: props.user.address,
     photo: null,
 });
 
@@ -130,18 +135,67 @@ const clearPhotoFileInput = () => {
 
             <!-- Name -->
             <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="name" value="Name" />
+                <InputLabel for="first_name" value="First Name" />
                 <TextInput
-                    id="name"
-                    v-model="form.name"
+                    id="first_name"
+                    v-model="form.first_name"
                     type="text"
                     class="mt-1 block w-full"
                     required
-                    autocomplete="name"
+                    autocomplete="first_name"
                 />
-                <InputError :message="form.errors.name" class="mt-2" />
+                <InputError :message="form.errors.first_name" class="mt-2" />
             </div>
 
+            <div class="col-span-6 sm:col-span-4">
+                <InputLabel for="middle_name" value="Middle Name" />
+                <TextInput
+                    id="middle_name"
+                    v-model="form.middle_name"
+                    type="text"
+                    class="mt-1 block w-full"
+                    autocomplete="middle_name"
+                />
+                <InputError :message="form.errors.middle_name" class="mt-2" />
+            </div>
+
+            <div class="col-span-6 sm:col-span-4">
+                <InputLabel for="last_name" value="Last Name" />
+                <TextInput
+                    id="last_name"
+                    v-model="form.last_name"
+                    type="text"
+                    class="mt-1 block w-full"
+                    required
+                    autocomplete="last_name"
+                />
+                <InputError :message="form.errors.last_name" class="mt-2" />
+            </div>
+
+            <div class="col-span-6 sm:col-span-4">
+                <InputLabel for="birthday" value="Date of Birth" class="mb-1 block w-full"/>
+                <DatePick
+                v-model="form.birthday"
+                id="birthday"
+                autofocus
+                disabled
+                autocomplete="birthday"
+                />
+                <InputError class="mt-2" :message="form.errors.birthday" />
+            </div>
+
+            <div class="col-span-6 sm:col-span-4">
+                <InputLabel for="address" value="Address" />
+                <textarea
+                    id="address"
+                    v-model="form.address"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                    required
+                    autocomplete="address"
+                />
+                <InputError class="mt-2" :message="form.errors.address" />
+            </div>
             <!-- Email -->
             <div class="col-span-6 sm:col-span-4">
                 <InputLabel for="email" value="Email" />
@@ -155,7 +209,7 @@ const clearPhotoFileInput = () => {
                 />
                 <InputError :message="form.errors.email" class="mt-2" />
 
-                <div v-if="$page.props.jetstream.hasEmailVerification && user.email_verified_at === null">
+                <!-- <div>
                     <p class="text-sm mt-2">
                         Your email address is unverified.
 
@@ -173,7 +227,7 @@ const clearPhotoFileInput = () => {
                     <div v-show="verificationLinkSent" class="mt-2 font-medium text-sm text-green-600">
                         A new verification link has been sent to your email address.
                     </div>
-                </div>
+                </div> -->
             </div>
         </template>
 

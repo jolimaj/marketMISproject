@@ -1,0 +1,83 @@
+[
+  {
+    "label": "Dashboard",
+    "icon": "home",
+    "link": "/admin/dashboard"
+  },
+  {
+    "label": "Users",
+    "icon": "usersList",
+    "link": "/users",
+    "children": [
+      {
+        "label": "All Users",
+        "icon": "all-users",
+        "link": "/admin/users?role=user"
+      },
+      {
+        "label": "Inspectors",
+        "icon": "inspectors",
+        "link": "/admin/users?role=inspector"
+      },
+      {
+        "label": "Department Admins",
+        "icon": "sub-admin",
+        "link": "/admin/users?role=sub-admin"
+      },
+      {
+        "label": "Roles",
+        "icon": "roles",
+        "link": "/admin/users/roles"
+      }
+    ]
+  },
+  {
+    "label": "Departments",
+    "icon": "departments",
+    "link": "/admin/departments"
+  },
+  {
+    "label": "Applications",
+    "icon": "applications",
+    "link": "/admin/applications",
+    "children": [
+      {
+        "label": "Stalls",
+        "icon": "stalls",
+        "link": "/admin/applications/stalls"
+      },
+      {
+        "label": "Volante",
+        "icon": "volante-type",
+        "link": "/admin/applications/volantes"
+      }
+    ]
+  },
+  {
+    "label": "System Setting",
+    "icon": "settings",
+    "link": "/admin/system-setting",
+    "children": [
+      {
+        "label": "Stalls",
+        "icon": "stalls",
+        "link": "/admin/system-setting/stalls"
+      },
+      {
+        "label": "Fees",
+        "icon": "fees",
+        "link": "/admin/system-setting/fees"
+      },
+      {
+        "label": "Stall Type",
+        "icon": "stall-type",
+        "link": "/admin/system-setting/stall-types"
+      },
+      {
+        "label": "Requirements",
+        "icon": "requirements",
+        "link": "/admin/system-setting/requirements"
+      }
+    ]
+  }
+]

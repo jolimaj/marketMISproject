@@ -1,64 +1,41 @@
 <?php
 
 return [
-    [
-        'name' => 'Barangay Clearance',
-        'assessed_by' => 'Barangay Office',
-    ],
-    [
-        'name' => 'DTI / SEC / CDA Registration',
-        'assessed_by' => 'Business Permit and Licensing Office (BPLO)',
-    ],
-    [
-        'name' => 'Occupancy Permit',
-        'assessed_by' => 'Office of the Building Official (OBO)',
-    ],
-    [
-        'name' => 'Community Tax Certificate (Cedula)',
-        'assessed_by' => 'Treasurer’s Office',
-    ],
-    [
-        'name' => 'Sanitary Permit / Health Clearance',
-        'assessed_by' => 'City/Municipal Health Office',
-    ],
-    [
-        'name' => 'Fire Safety Inspection Certificate',
-        'assessed_by' => 'Bureau of Fire Protection (BFP)',
-    ],
-    [
-        'name' => 'Lease of Contract / Land Title / Proof of Ownership',
-        'assessed_by' => 'Business Permit and Licensing Office (BPLO)',
-    ],
-    [
-        'name' => 'Picture of Establishment (Front View)',
-        'assessed_by' => 'Business Permit and Licensing Office (BPLO)',
-    ],
-    [
-        'name' => 'Valid Government-issued ID',
-        'assessed_by' => 'Business Permit and Licensing Office (BPLO)',
-    ],
-    [
-        'name' => 'Zoning Clearance',
-        'assessed_by' => 'Zoning Office / Planning Department',
-    ],
-    [
-        'name' => 'Environmental Clearance (if applicable)',
-        'assessed_by' => 'Environmental Office / DENR',
-    ],
-    [
-        'name' => 'Barangay Business Endorsement',
-        'assessed_by' => 'Barangay Office',
-    ],
-    [
-        'name' => 'Location Map / Sketch of Business',
-        'assessed_by' => 'Business Permit and Licensing Office (BPLO)',
-    ],
-    [
-        'name' => 'Market Clearance (if operating in public market)',
-        'assessed_by' => 'Public Market Office',
-    ],
-    [
-        'name' => 'Previous Year’s Business Permit (for renewals)',
-        'assessed_by' => 'Business Permit and Licensing Office (BPLO)',
-    ],
+    ['name' => 'Barangay Business Clearance', 'description' => 'Certification from your barangay that your business is authorized.', 'isBusiness' => false, 'isStall' => true, 'isVolante' => true, 'isBusinessType' => 3, 'isStallType' => 3, 'isVolanteType' => 1, 'isRequired' => true],
+    ['name' => 'Community Tax Certificate (Cedula)', 'description' => 'Proof of payment of community tax from the barangay or city hall.', 'isBusiness' => false, 'isStall' => true, 'isVolante' => true, 'isBusinessType' => 3, 'isStallType' => 3, 'isVolanteType' => 3, 'isRequired' => true],
+    ['name' => 'Valid Government-issued ID', 'description' => 'Any valid ID such as Passport, Driver’s License, UMID, or Voter’s ID.', 'isBusiness' => false, 'isStall' => true, 'isVolante' => true, 'isBusinessType' => 0, 'isStallType' => 3, 'isVolanteType' => 3, 'isRequired' => true],
+    ['name' => 'Barangay Clearance', 'description' => 'Document from the barangay certifying you have no derogatory record.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => true, 'isBusinessType' => 3, 'isStallType' => 3, 'isVolanteType' => 1, 'isRequired' => true],
+    ['name' => 'DTI/SEC/CDA Registration', 'description' => 'Proof of registration for sole proprietorship, corporation, or cooperative.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 1, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Occupancy Permit', 'description' => 'Certification from the municipal engineering office that the space is safe for use.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 3, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Zoning Clearance', 'description' => 'Document certifying that the business complies with local zoning regulations.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 3, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Sanitary Permit / Health Certificate', 'description' => 'Issued by the municipal health office ensuring compliance with sanitation rules.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 3, 'isStallType' => 3, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Fire Safety Inspection Certificate', 'description' => 'Issued by the Bureau of Fire Protection ensuring compliance with fire safety standards.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 3, 'isStallType' => 3, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Contract of Lease / Land Title / Tax Declaration', 'description' => 'Proof of ownership or lease agreement for business location.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 3, 'isStallType' => 3, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Sketch of Business Location', 'description' => 'Simple sketch or map showing the exact business location.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 1, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => false],
+
+    ['name' => 'Previous Year’s Business Permit (for renewals)', 'description' => 'Copy of the previous year’s permit for renewal purposes.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 2, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => false],
+    ['name' => 'Income Tax Return or Audited Financial Statement', 'description' => 'Proof of income for business tax assessment.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 2, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => false],
+    ['name' => 'BIR Certificate of Registration (Form 2303)', 'description' => 'Official BIR certificate for registered businesses.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 1, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'SSS / PhilHealth / Pag-IBIG Compliance Certificate', 'description' => 'Certification that employer obligations to government benefits are up-to-date.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 1, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => false],
+    ['name' => 'Environmental Compliance Certificate (if applicable)', 'description' => 'Certification from DENR for environmentally sensitive businesses.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 1, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => false],
+    ['name' => 'Public Liability Insurance (if required)', 'description' => 'Insurance policy protecting against liabilities to third parties.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 3, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => false],
+    ['name' => 'Picture of Business Establishment', 'description' => 'Recent photo of the business premises for record purposes.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 3, 'isStallType' => 0, 'isVolanteType' => 0, 'isRequired' => false],
+    ['name' => 'Letter of Request Addressed to the Mayor', 'description' => 'Formal letter of request for permit approval.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 1, 'isStallType' => 0, 'isVolanteType' => 1, 'isRequired' => true],
+    ['name' => 'Business Permit (if applicable)', 'description' => 'Copy of existing valid business permit.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 0, 'isVolanteType' => 3, 'isRequired' => false],
+    ['name' => 'Sketch or Layout of Volante Design', 'description' => 'Design layout for volante or advertisement materials.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 0, 'isVolanteType' => 1, 'isRequired' => false],
+    ['name' => 'Location Map for Posting', 'description' => 'Map showing where the advertisement will be placed.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 0, 'isVolanteType' => 1, 'isRequired' => false],
+    ['name' => 'Duration of Posting (Start and End Date)', 'description' => 'Dates indicating the start and end of the posting.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 0, 'isVolanteType' => 1, 'isRequired' => false],
+    ['name' => 'Sample Copy of Advertisement Material', 'description' => 'Sample copy of the material for approval before posting.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 0, 'isVolanteType' => 1, 'isRequired' => false],
+    ['name' => 'Payment of Applicable Fees', 'description' => 'Official receipt for paid permit fees.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 3, 'isStallType' => 3, 'isVolanteType' => 3, 'isRequired' => true],
+    ['name' => 'Approval from Municipal Information Office (if required)', 'description' => 'Approval for posting materials in public spaces.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 0, 'isVolanteType' => 1, 'isRequired' => false],
+    ['name' => 'Clearance from the Municipal Engineering Office (for safety compliance)', 'description' => 'Ensures structures or installations comply with engineering standards.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 3, 'isStallType' => 3, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Duly Accomplished Stall Application Form', 'description' => 'Official application form for stall requests.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 1, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => '2x2 ID Picture (2 copies)', 'description' => 'Recent 2x2 photographs required for application.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 1, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Proof of Billing or Residency Certificate', 'description' => 'Document verifying applicant’s address or residency.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 1, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Health Certificate (for food-related stalls)', 'description' => 'Medical certificate ensuring food handlers are fit for work.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 3, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Affidavit of No Existing Stall (if required)', 'description' => 'Sworn affidavit stating applicant has no existing stall.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 1, 'isVolanteType' => 0, 'isRequired' => false],
+    ['name' => 'Market Rules and Regulations Compliance Form (signed)', 'description' => 'Signed compliance form agreeing to market rules.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 3, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Payment of Application or Rental Fees', 'description' => 'Receipt of payment for application or stall rental.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 3, 'isVolanteType' => 0, 'isRequired' => true],
+    ['name' => 'Sketch or Location of Desired Stall (if applicable)', 'description' => 'Sketch showing the preferred stall location.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 1, 'isVolanteType' => 0, 'isRequired' => false],
+    ['name' => 'Clearance from Public Market Office', 'description' => 'Certification from market office approving the stall.', 'isBusiness' => false, 'isStall' => false, 'isVolante' => false, 'isBusinessType' => 0, 'isStallType' => 3, 'isVolanteType' => 0, 'isRequired' => true],
 ];

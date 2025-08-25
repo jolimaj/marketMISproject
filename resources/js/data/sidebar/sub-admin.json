@@ -1,0 +1,24 @@
+[
+  {
+    "label": "Dashboard",
+    "icon": "home",
+    "link": "/department/dashboard"
+  },
+  {
+    "label": "Applications",
+    "icon": "applications",
+    "link": "/department/applications",
+    "children": [
+      {
+        "label": "Stall Rental",
+        "icon": "stalls",
+        "link": "/department/applications/stall-rental-permits"
+      },
+      {
+        "label": "Volante Rental",
+        "icon": "volante-type",
+        "link": "/department/applications/volante-rental-permits"
+      }
+    ]
+  }
+]

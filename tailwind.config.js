@@ -14,11 +14,18 @@ export default {
 
     theme: {
         extend: {
-            fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
-            },
+        colors: {
+            primary: ' #0A45B9',
+            secondary: ' #5e9bf8',
+        },
+        fontFamily: {
+            montserrat: ['Montserrat', 'sans-serif'],
+        },
+        backgroundImage: {
+            'btn-gradient': 'linear-gradient(to right,  #0A4B94, #73AAE6)',
         },
     },
+  },
 
     plugins: [forms, typography],
 };

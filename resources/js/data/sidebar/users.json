@@ -1,0 +1,24 @@
+[
+  {
+    "label": "Dashboard",
+    "icon": "home",
+    "link": "/dashboard"
+  },
+  {
+    "label": "My Applications",
+    "icon": "applications",
+    "link": "/my-applications",
+    "children": [
+      {
+        "label": "Stall Rental",
+        "icon": "stalls",
+        "link": "/my-applications/stall-rental-permits"
+      },
+      {
+        "label": "Volante Rental",
+        "icon": "volante-type",
+        "link": "/my-applications/volante-rental-permits"
+      }
+    ]
+  }
+]

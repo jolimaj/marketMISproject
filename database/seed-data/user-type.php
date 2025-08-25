@@ -6,5 +6,11 @@ return [
     ],
     [
         'name' => 'Stallholder',
+    ],
+    [
+        'name' => 'Inspector', // can only view inspections
+    ],
+    [
+        'name' => 'Business Owner', // can only view inspections
     ]
 ];
