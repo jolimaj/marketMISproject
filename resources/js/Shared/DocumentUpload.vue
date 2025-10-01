@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <!-- Required documents list -->
     <div class="space-y-4">
-      <h3 class="text-lg font-semibold">Required Documents</h3>
+      <h3 class="text-lg font-semibold text-secondary">Required Documents</h3>
       <ul class="space-y-2">
         <li 
           v-for="doc in requiredDocs" 

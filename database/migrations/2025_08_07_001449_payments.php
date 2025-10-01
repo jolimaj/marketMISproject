@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->integer('user_id');
+            $table->integer('table_rental_id')->nullable();
             $table->integer('stall_rental_id')->nullable();
-            $table->integer('business_id')->nullable();
             $table->integer('volantes_id')->nullable();
             $table->string('receipt')->nullable();
             $table->date('date');

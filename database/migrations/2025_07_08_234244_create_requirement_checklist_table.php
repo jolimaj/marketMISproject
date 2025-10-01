@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->text('description');
-            $table->boolean('isBusiness');
+            $table->boolean('isTable');
             $table->boolean('isStall');
             $table->boolean('isVolante');
             $table->boolean('isRequired');
-            $table->integer('isBusinessType'); // 1 - New, 2 - Renew 3 - Both
+            $table->integer('isTableType'); // 1 - New, 2 - Renew 3 - Both
             $table->integer('isStallType'); // 1 - New, 2 - Renew 3 - Both
             $table->integer('isVolanteType'); // 1 - New, 2 - Renew 3 - Both
             $table->timestamps();

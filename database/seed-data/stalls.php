@@ -1,206 +1,422 @@
 <?php
 
 return [
-    // 🔹 Meat Section (5 stalls)
-    [
-        'stall_category_id' => 1,
-        'name' => 'Meat Stall A1',
-        'size' => json_encode(['long' => 6.0, 'lat' => 4.0]),
-        'location' => 'Row A - Stall 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 24.0,
-    ],
-    [
-        'stall_category_id' => 1,
-        'name' => 'Meat Stall A2',
-        'size' => json_encode(['long' => 6.0, 'lat' => 4.0]),
-        'location' => 'Row A - Stall 2',
-        'status' => 2,
-        'area_of_sqr_meter' => 24.0,
-    ],
-    [
-        'stall_category_id' => 1,
-        'name' => 'Meat Stall A3',
-        'size' => json_encode(['long' => 6.0, 'lat' => 4.0]),
-        'location' => 'Row A - Stall 3',
-        'status' => 2,
-        'area_of_sqr_meter' => 24.0,
-    ],
-    [
-        'stall_category_id' => 1,
-        'name' => 'Meat Stall A4',
-        'size' => json_encode(['long' => 6.0, 'lat' => 4.0]),
-        'location' => 'Row A - Stall 4',
-        'status' => 2,
-        'area_of_sqr_meter' => 24.0,
-    ],
-    [
-        'stall_category_id' => 1,
-        'name' => 'Meat Stall A5',
-        'size' => json_encode(['long' => 6.0, 'lat' => 4.0]),
-        'location' => 'Row A - Stall 5',
-        'status' => 2,
-        'area_of_sqr_meter' => 24.0,
-    ],
-
-    // 🔹 Fish Section (5 stalls)
-    [
-        'stall_category_id' => 2,
-        'name' => 'Fish Stall B1',
-        'size' => json_encode(['long' => 5.0, 'lat' => 4.0]),
-        'location' => 'Row B - Stall 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 20.0,
-    ],
-    [
-        'stall_category_id' => 2,
-        'name' => 'Fish Stall B2',
-        'size' => json_encode(['long' => 5.0, 'lat' => 4.0]),
-        'location' => 'Row B - Stall 2',
-        'status' => 2,
-        'area_of_sqr_meter' => 20.0,
-    ],
-    [
-        'stall_category_id' => 2,
-        'name' => 'Fish Stall B3',
-        'size' => json_encode(['long' => 5.0, 'lat' => 4.0]),
-        'location' => 'Row B - Stall 3',
-        'status' => 2,
-        'area_of_sqr_meter' => 20.0,
-    ],
-    [
-        'stall_category_id' => 2,
-        'name' => 'Fish Stall B4',
-        'size' => json_encode(['long' => 5.0, 'lat' => 4.0]),
-        'location' => 'Row B - Stall 4',
-        'status' => 2,
-        'area_of_sqr_meter' => 20.0,
-    ],
-    [
-        'stall_category_id' => 2,
-        'name' => 'Fish Stall B5',
-        'size' => json_encode(['long' => 5.0, 'lat' => 4.0]),
-        'location' => 'Row B - Stall 5',
-        'status' => 2,
-        'area_of_sqr_meter' => 20.0,
-    ],
-
-    // 🔹 Vegetables (Gulayan, 5 stalls)
-    [
-        'stall_category_id' => 3,
-        'name' => 'Veggie Stall C1',
-        'size' => json_encode(['long' => 4.0, 'lat' => 3.0]),
-        'location' => 'Row C - Stall 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 12.0,
-    ],
-    [
-        'stall_category_id' => 3,
-        'name' => 'Veggie Stall C2',
-        'size' => json_encode(['long' => 4.0, 'lat' => 3.0]),
-        'location' => 'Row C - Stall 2',
-        'status' => 2,
-        'area_of_sqr_meter' => 12.0,
-    ],
-    [
-        'stall_category_id' => 3,
-        'name' => 'Veggie Stall C3',
-        'size' => json_encode(['long' => 4.0, 'lat' => 3.0]),
-        'location' => 'Row C - Stall 3',
-        'status' => 2,
-        'area_of_sqr_meter' => 12.0,
-    ],
-    [
-        'stall_category_id' => 3,
-        'name' => 'Veggie Stall C4',
-        'size' => json_encode(['long' => 4.0, 'lat' => 3.0]),
-        'location' => 'Row C - Stall 4',
-        'status' => 2,
-        'area_of_sqr_meter' => 12.0,
-    ],
-    [
-        'stall_category_id' => 3,
-        'name' => 'Veggie Stall C5',
-        'size' => json_encode(['long' => 4.0, 'lat' => 3.0]),
-        'location' => 'Row C - Stall 5',
-        'status' => 2,
-        'area_of_sqr_meter' => 12.0,
-    ],
-
-    // 🔹 Poultry (5 stalls)
-    [
-        'stall_category_id' => 4,
-        'name' => 'Poultry Stall D1',
-        'size' => json_encode(['long' => 5.0, 'lat' => 3.0]),
-        'location' => 'Row D - Stall 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 15.0,
-    ],
-    // … repeat until D5
-
-    // 🔹 Fruits (5 stalls)
-    [
-        'stall_category_id' => 5,
-        'name' => 'Fruit Stall E1',
-        'size' => json_encode(['long' => 4.0, 'lat' => 3.0]),
-        'location' => 'Row E - Stall 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 12.0,
-    ],
-    // … repeat until E5
-
-    // 🔹 Rice & Grains (5 stalls)
-    [
-        'stall_category_id' => 8,
-        'name' => 'Rice Stall F1',
-        'size' => json_encode(['long' => 5.0, 'lat' => 4.0]),
-        'location' => 'Row F - Stall 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 20.0,
-    ],
-    // … repeat until F5
-
-    // 🔹 Eatery (5 stalls)
-    [
-        'stall_category_id' => 9,
-        'name' => 'Eatery G1',
-        'size' => json_encode(['long' => 8.0, 'lat' => 6.0]),
-        'location' => 'Food Court - Unit 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 48.0,
-    ],
-    // … repeat until G5
-
-    // 🔹 Dry Goods (5 stalls)
-    [
-        'stall_category_id' => 10,
-        'name' => 'Dry Goods Stall H1',
-        'size' => json_encode(['long' => 6.0, 'lat' => 5.0]),
-        'location' => 'Second Floor - Unit 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 30.0,
-    ],
-    // … repeat until H5
-
-    // 🔹 Volante / Transient Poultry (10 slots)
-    [
-        'stall_category_id' => 6,
-        'name' => 'Transient Slot P1',
-        'size' => json_encode(['long' => 3.0, 'lat' => 2.0]),
-        'location' => 'Trading Post - Poultry 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 6.0,
-    ],
-    // … repeat until P10
-
-    // 🔹 Volante / Transient Seafood (10 slots)
+    // Market Stalls
     [
         'stall_category_id' => 7,
-        'name' => 'Transient Slot S1',
-        'size' => json_encode(['long' => 3.0, 'lat' => 2.0]),
-        'location' => 'Trading Post - Seafood 1',
-        'status' => 2,
-        'area_of_sqr_meter' => 6.0,
+        'name' => 'Stall 1',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785096661347, 13.964688164207226]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 4.8, 'width' => 7.71]),
+        
     ],
-    // … repeat until S10
-];
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 2',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52782390109604, 13.965023050206746]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 3.8, 'width' => 7.17]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 3',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.5276502306926, 13.965097469251646]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 4.29, 'width' => 7.17]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 4',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785 + rand(-5,5)/1000, 13.964688 + rand(-5,5)/1000]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 3.81, 'width' => 7.17]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 5',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52767504075022, 13.965141245149185]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 3.83, 'width' => 7.17]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 6',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785 + rand(-5,5)/1000, 13.964688 + rand(-5,5)/1000]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 8.13, 'width' => 7.17]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 7',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785 + rand(-5,5)/1000, 13.964688 + rand(-5,5)/1000]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 4.75, 'width' => 2.95]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 8',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785 + rand(-5,5)/1000, 13.964688 + rand(-5,5)/1000]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 9.3, 'width' => 6.72]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 9',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785 + rand(-5,5)/1000, 13.964688 + rand(-5,5)/1000]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 3.32, 'width' => 5.78]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 10',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785 + rand(-5,5)/1000, 13.964688 + rand(-5,5)/1000]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 3.65, 'width' => 4.71]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 11',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785 + rand(-5,5)/1000, 13.964688 + rand(-5,5)/1000]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 5.5, 'width' => 4.35]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 12',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785 + rand(-5,5)/1000, 13.964688 + rand(-5,5)/1000]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 6.8, 'width' => 5.95]),
+        
+    ],
+    [
+        'stall_category_id' => 7,
+        'name' => 'Stall 13',
+        'is_occupied' => false,
+        'coordinates' => json_encode([121.52785 + rand(-5,5)/1000, 13.964688 + rand(-5,5)/1000]),
+        'location_description' => null,
+        'size' => json_encode(['length' => 6.16, 'width' => 5.12]),
+        
+    ],
+    // Table Rentals - Fish Section
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 1-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 2-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 3-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 4-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 5-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 6-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 7-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 8-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 9-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 1,
+        'name' => 'Table 10-Fish Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Fish Section',
+        'size' => null,
+        
+    ],
+    //Meat Table
+
+    // Poultry
+        [
+        'stall_category_id' => 2,
+        'name' => 'Table 1-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 2,
+        'name' => 'Table 2-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 2,
+        'name' => 'Table 3-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 2,
+        'name' => 'Table 4-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 2,
+        'name' => 'Table 5-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 2,
+        'name' => 'Table 6-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 2,
+        'name' => 'Table 7-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 2,
+        'name' => 'Table 8-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 2,
+        'name' => 'Table 9-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 2,
+        'name' => 'Table 10-Poultry Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Poultry Section',
+        'size' => null,
+         
+    ],
+        // Meat 
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 1-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 2-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 3-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 4-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 5-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 6-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 7-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 8-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+         
+    ],
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 9-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 3,
+        'name' => 'Table 10-Meat Section',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Meat Section',
+        'size' => null,
+    ],
+    // Volante
+    [
+        'stall_category_id' => 6,
+        'name' => 'Volante Slot 1',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Besides Chicken Section',
+        'size' => null,
+        
+    ],
+    [
+        'stall_category_id' => 4,
+        'name' => 'Volante Slot 2',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Near Entrance',
+        'size' => null,
+        
+    ],    [
+        'stall_category_id' => 5,
+        'name' => 'Volante Slot 3',
+        'is_occupied' => false,
+        'coordinates' => null,
+        'location_description' => 'Near Meat Section',
+        'size' => null,
+        
+    ],];

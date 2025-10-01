@@ -8,6 +8,7 @@ class RequirementChecklist extends Model
 {
     protected $fillable = [
         'name',
+        'description',
     ];
 
     public function scopeFilter($query, array $filters)
@@ -55,12 +56,26 @@ class RequirementChecklist extends Model
             ->get();
     }
 
+    private function tablePermitNew() {
+        return $this->where('isTable', true)
+            ->whereIn('isTableType', [1, 3])
+            ->get();
+    }
+
+    private function tablePermitRenew() {
+        return $this->where('isTable', true)
+            ->whereIn('isTableType', [2, 3])
+            ->get();
+    }
+
     public function scopeRequirementsList() {
        return [
             'stall_new' => $this->stallPermitNew(),
             'stall_renew' => $this->stallPermitRenew(),
             'volante_new' => $this->volantePermitNew(),
             'volante_renew' => $this->volantePermitRenew(),
+            'table_new' => $this->tablePermitNew(),
+            'table_renew' => $this->tablePermitRenew(),
         ];
     }
 }

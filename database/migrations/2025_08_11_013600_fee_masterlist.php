@@ -15,10 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('type');
             $table->double('amount')->default(0);
-            $table->boolean('is_daily')->default(false); // per day
-            $table->boolean('is_monthly')->default(false); // per day
-            $table->boolean('is_styro')->default(false); // per day
-            $table->boolean('is_per_kilo')->default(false); // per day
+            $table->string('description')->nullable();
             $table->timestamps();
         });
     }

@@ -246,7 +246,7 @@
 
           <!-- Step navigation -->
           <div class="flex items-center px-8 py-4 bg-gray-50 border-t border-gray-100">
-            <Link href="/my-applications/volante-rental-permits" class="text-red-600 hover:underline" tabindex="-1">Cancel</Link>
+            <Link href="/my-rentals/market-volante" class="text-red-600 hover:underline" tabindex="-1">Cancel</Link>
             
             <div class="ml-auto flex gap-2">
               <button
@@ -305,6 +305,7 @@ const props = defineProps({
   stallTypes: Object,
   requirements: Object,
   paymentDetails: Object,
+  total_payments: Object,
 });
 
 const step = ref(1);
@@ -377,6 +378,23 @@ const nextButton = () => {
     }
   } 
   else if (step.value === 2) {
+    if(checkIfEdit()){
+      step.value++;
+    }
+    else {
+      if (localFiles.value.some(file => file.status === 'uploading')) {
+       form.errors.requirements = "Please wait until all files are uploaded."
+      } 
+      else if (localFiles.value.length === 0) {
+        form.errors.requirements = "The requirements are required."
+      }
+      else {
+        step.value++;
+      }
+    }
+
+  }
+  else if (step.value === 3) {
     if(checkIfEdit()){
       step.value++;
     }

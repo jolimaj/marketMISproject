@@ -11,22 +11,21 @@
             <div class="flex items-center justify-between mb-6">
              <search-filter v-model="form.search" class="mr-4 w-full max-w-md" @reset="reset"/>
                 <Link type="submit" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
-                :href="`/admin/system-setting/requirements/create`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors">Add Requirement</Link>
+                :href="`/admin/system-setting/requirements/create`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors">Create New</Link>
             </div>
             <BaseTable :headers="headers" :data="requirementsList?.data">
                 <!-- Optional: Customize header -->
                 <template #header>
-                    <th class="px-4 py-3 text-left">Requirement ID</th>
                     <th class="px-4 py-3 text-left">Name</th>
-                    <th class="px-4 py-3 text-left">Required</th>
+                    <th class="px-4 py-3 text-left">Description</th>
+                    <th class="px-4 py-3 text-left"></th>
                 </template>
 
                 <!-- Optional: Customize rows -->
                 <template #row="{ data }">
                     <tr v-for="(req, i) in data" :key="requirementsList.id" class="hover:bg-gray-50">
-                        <td class="px-4 py-3">{{ req.id }}</td>
                         <td class="px-4 py-3 capitalize">{{ req.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{ req.isRequired }}</td>
+                        <td class="px-4 py-3 capitalize">{{ req.description }}</td>
                         <td class="w-px border-t">
                             <Link class="flex items-center px-4" :href="route('admin.requirements.edit', req.id)" tabindex="-1">
                                 <icon name="cheveron-right" class="block w-6 h-6 fill-primary" />
@@ -90,4 +89,5 @@ watch(
 function reset() {
     Object.assign(form, mapValues(form, () => null));
 }
+
 </script>

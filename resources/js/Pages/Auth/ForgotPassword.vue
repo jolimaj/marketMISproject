@@ -23,7 +23,7 @@ const submit = () => {
 </script>
 
 <template>
-  <Head title="MARKETIS" />
+  <Head title="MARKETMIS" />
   <Background>
     <template #logo>
       <div class="flex flex-col sm:justify-center items-center justify-center mb-6">

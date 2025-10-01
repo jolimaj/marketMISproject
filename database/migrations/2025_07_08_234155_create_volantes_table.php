@@ -16,13 +16,15 @@ return new class extends Migration
             $table->integer('user_id');
             $table->integer('permit_id');
             $table->integer('stall_id');
-            $table->string('business_name');
-            $table->double('quantity')->default(0);
-            $table->text('location')->nullable();
-            $table->integer('duration'); // 1- Day, 2-Week, 3- Event
+            $table->string('business_name')->nullable();
             $table->integer('status')->default(2);//1- Occupied, 2-Vacant, 3- Reserved'
-            $table->date('started_date');
-            $table->date('end_date');
+            $table->date('started_date')->nullable();;
+            $table->date('end_date')->nullable();;
+            $table->boolean('acknowledgeContract')->default(true);
+            $table->string('attachment_signature');
+            $table->integer('bulb')->default(0);
+            $table->double('total_payment');
+            $table->string('fees_additional')->nullable();
             $table->timestamps();
         });
     }

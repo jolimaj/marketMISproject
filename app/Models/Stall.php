@@ -12,7 +12,8 @@ class Stall extends Model
         'name',
         'stall_category_id',
         'size',
-        'area_of_sqr_meter',
+        'coordinates',
+        'location_description',
         'status',
     ];
     public function stallsCategories(): BelongsTo

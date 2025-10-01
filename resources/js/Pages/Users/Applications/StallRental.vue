@@ -6,31 +6,63 @@
                 Stall
             </h2>
         </template>
-        <h1 class="mb-8 text-3xl font-bold text-primary">Stall Rentals</h1>
+        <h1 class="mb-8 text-3xl font-bold text-primary">Stalls Leasing</h1>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="flex items-center justify-end mb-6 md:justify-self-center w-full">
-            <Link type="submit" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
-                :href="`/my-applications/stall-rental-permits/create`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors">Apply for New Permit</Link>
+            <FlashMessage v-if="$page.props.flash.success" :message="$page.props.flash.success" type="success" />
+            <FlashMessage v-if="$page.props.flash.error" :message="$page.props.flash.error" type="error" />
+            <div class="flex items-center justify-between mb-6">
+                <search-filter v-model="form.search" class="mr-4 w-full max-w-md" @reset="reset">
+                    <label class="block text-gray-700">Type:</label>
+                    <select v-model="form.type" class="form-select mt-1 w-full">
+                        <option :value="null">All</option>
+                        <option
+                            v-for="stat in statusOptions"
+                            :key="stat.id"
+                            :value="stat.id"
+                        >{{ stat.name }}</option> 
+                    </select>
+                </search-filter>
+                <Link type="submit" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
+                :href="`/my-rentals/stall-leasing/create`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors">Rent New</Link>
             </div>
-            <BaseTable :headers="headers" :data="stallRentals?.data">
+            <BaseTable :headers="headers" :data="stallRentals?.data" :class="'center text-center sticky right-0 bg-white z-10'">
                 <template #row="{ data }">
                     <tr v-for="(bsn, i) in data" :key="stallRentals.id" class="hover:bg-gray-50">
-                        <td class="px-4 py-3 capitalize">{{ bsn.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn.stalls.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn.stalls?.stallsCategories?.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn?.start_date ? `${formatDate(bsn.start_date)}` : '-'}}</td>
-                        <td class="px-4 py-3 capitalize">
+                        <td class="px-4 py-3 capitalize text-center">{{bsn?.permits?.permit_number ? `${bsn?.permits?.permit_number }`: '-'}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{`${fullName(bsn?.vendor)}`}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{ bsn.name }}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{ bsn?.stalls?.name }}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{bsn?.start_date && bsn?.end_date ? `${formatDate(bsn.start_date)} - ${formatDate(bsn.end_date)}` : '-' }}</td>
+                        <td class="px-4 py-3 capitalize text-center">
+                            <Badge :color="bsn?.permits?.type === 'new' ? 'green' : 'blue'">
+                                {{ bsn?.permits?.type }}
+                             </Badge>
+                        </td>
+
+                        <td class="px-4 py-3 capitalize text-center">{{formatAmount(bsn?.quarterly_payment)}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{ bsn?.next_payment_due ? formatDate(new Date(bsn?.next_payment_due)) : 'N/A'}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{formatAmount(bsn?.penalty)}}</td>
+                        <td class="px-4 py-3 capitalize text-center">
+                            <p class="font-semibold text-blue-600" v-if="bsn?.current_payment === 'Paid'">Paid</p>
+
+                            <button
+                                v-if="bsn?.current_payment === 'Not Paid'"
+                                :disabled="bsn?.permits?.status !== 1"
+                                class="inline-block bg-blue-600 text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors"
+                                @click="payNow(bsn)"
+                                tabindex="-1"
+                            >
+                                Pay Now
+                            </button>
+                        </td>
+
+                        <td class="px-4 py-3 capitalize text-center">
                              <Badge :color="status(bsn.permits.status).color">
                                 {{ status(bsn.permits.status).status }}
                              </Badge>
                         </td>
                         <td class="px-4 py-3 capitalize">
-                            <Link class="flex items-center px-4" :href="`/my-applications/stall-rental-permits/${bsn.id}/edit`" tabindex="-1" v-if="bsn.status === 1">
-                                <icon name="download" class="block w-6 h-6 fill-primary" />
-                            </Link>
-                        </td>
-                        <td class="px-4 py-3 capitalize">
-                            <Link class="flex items-center pr-2" :href="`/my-applications/stall-rental-permits/${bsn.id}/edit`" tabindex="-1">
+                            <Link class="flex items-center pr-2" :href="`/my-rentals/stall-leasing/${bsn.id}`" tabindex="-1">
                                 <icon name="cheveron-right" class="block w-6 h-6 fill-primary" />
                             </Link>
                         </td>
@@ -44,37 +76,131 @@
         <div class="mt-6 flex justify-center">
             <pagination :links="stallRentals?.links" />
         </div>
+        <ConfirmationModal :show="isPayment" @close="cancelPayment">
+                <template #title>
+                    Pay Now
+                </template>
+                <div>
+                    
+                </div>
+                <template #content>
+                    <div class="space-y-4 p-4 text-left">
+                        <p class="text-gray-600">Please complete your payment below:</p>
+                        <iframe 
+                        src="https://www.lbp-eservices.com/egps/portal/Fields.jsp" 
+                        class="w-full h-96 border rounded-md"
+                        ></iframe>
+                       <div class="flex flex-col md:flex-row gap-4 mt-5">
+
+                           <div class="w-full">
+                                <InputLabel for="receipt" value="Receipt" class="mb-1 block w-full"/>
+                                <SingleFileUpload
+                                v-model="formData.receipt"
+                                label="Upload Official Receipt"
+                                accept=".jpg,.jpeg,.png,.pdf"
+                                class="mt-1 block w-full"
+                                :error="formData?.errors?.receipt"
+                                />
+                                <InputError class="mt-2" :message="formData?.errors?.receipt" />
+                            </div>
+                        </div>
+                        <div class="flex flex-col md:flex-row gap-4 mt-5">
+                            <div class="w-full">
+                                <InputLabel for="amount" value="Amount" />
+                                <TextInput
+                                id="amount"
+                                v-model="formData.amount"
+                                type="text"
+                                class="mt-1 block w-full"
+                                required
+                                autofocus
+                                autocomplete="amount"
+                                />
+                                <InputError class="mt-2" :message="formData?.errors?.amount" />
+                            </div>
+                            <div class="w-full">
+                                <InputLabel for="reference_number" value="Reference Number" />
+                                <TextInput
+                                id="reference_number"
+                                v-model="formData.reference_number"
+                                type="text"
+                                class="mt-1 block w-full"
+                                required
+                                autofocus
+                                autocomplete="reference_number"
+                                />
+                                <InputError class="mt-2" :message="formData?.errors?.reference_number" />
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template #footer>
+                    <div class="flex justify-end space-x-3 p-4">
+                      
+                        <SecondaryButton @click="cancelPayment">
+                          Cancel
+                        </SecondaryButton>
+                      <form @submit.prevent="submit">
+
+                       <!-- Submit button -->
+                         <loading-button  
+                            :loading="form.processing"
+                            class="bg-primary ml-auto"
+                            type="submit">
+                            Submit
+                         </loading-button>
+                      
+                      </form>
+                    </div>
+                </template>
+        </ConfirmationModal>
     </AppLayout>
 </template>
 
 
 <script setup>
 import {
-    defineProps, watch, reactive
+    defineProps, watch, reactive, ref
 } from 'vue';
 import {
     Link,
-    router
+    router,
+    useForm
 } from '@inertiajs/vue3';
-import { throttle, mapValues } from 'lodash'
+import { throttle } from 'lodash'
 import pickBy from 'lodash/pickBy'
 
 import AppLayout from '@/Layouts/AppLayout.vue'
 import BaseTable from '@/Shared/BaseTable.vue';
 import Pagination from '@/Shared/Pagination.vue';
 import Icon from '@/Shared/Icons.vue'
-import { formatDate } from '@/data/helper';
+import { formatAmount, formatDate, fullName } from '@/data/helper';
 import Badge from '@/Shared/Badge.vue';
+import FlashMessage from '@/Shared/FlashMessage.vue';
+import SearchFilter from '@/Shared/SearchFilter.vue';
+import ConfirmationModal from '@/Components/ConfirmationModal.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import TextInput from '@/Components/TextInput.vue';
+import InputError from '@/Components/InputError.vue';
+import SingleFileUpload from '@/Shared/SingleFileUpload.vue';
+import LoadingButton from '@/Shared/LoadingButton.vue'
 
+const isPayment = ref(false);
 const headers = [
+    'Rental No.',
+    'Vendor',
     'Business Name',
-    'Stall Name',
-    'Category',
-    'Desired Start Date',
+    'Stall',
+    'Duration',
+    'Type',
+    'Quarterly Payment',
+    'Due Date',
+    'Penalty',
+    'Current Payment',
     'Status',
-    '',
-    ''
-];
+    ''];
 
 
 const props = defineProps({
@@ -84,45 +210,87 @@ const props = defineProps({
 
 const form = reactive({ 
     search: props?.filters?.search,
+    type: props?.filters?.type,
+});
+
+const formData = useForm({ 
+  receipt: null,
+  reference_number: '',
+  amount: 0,
+  stall_rental_id: null,
 });
 
 watch(
   form,
   throttle(() => {
-    router.get(`/admin/applications/stalls`, pickBy(form), { preserveState: true })
+    router.get(`/my-rentals/stall-leasing`, pickBy(form), { preserveState: true })
   }, 150),
   { deep: true }
 );
 
+//0-pending,1- approved, 2-rejected, 3- expired
 const status = (stat) => {
-    let permitStatus = {};
+    let statuss = {
+        color: 'blue',
+        status: 'Vacant'
+    };
     switch (stat) {
         case 3:
-            permitStatus = {
+            statuss = {
                 color: 'orange',
                 status: 'Expired'
             };
             break;
-        case 3:
-            permitStatus = {
+        case 2:
+            statuss = {
                 color: 'red',
                 status: 'Rejected'
             };
             break;
         case 1:
-            permitStatus = {
+            statuss = {
                 color: 'green',
                 status: 'Approved'
             };
             break;
         default:
-            permitStatus = {
-                  color: 'blue',
+            statuss = {
+                color: 'blue',
                 status: 'Pending'
-               
             };
     }
    
-    return permitStatus;
+    return statuss;
 };
+
+const statusOptions = [
+  { id: 1, name: "New" },
+  { id: 2, name: "Renewal" },
+];
+
+function reset() {
+    form.search = '';
+    form.type = null;
+    Object.assign(form, mapValues(form, () => null));
+}
+
+function cancelPayment() {
+    isPayment.value = false;
+}
+
+function payNow(data) {
+    formData.amount = data?.quarterly_payment;
+    formData.stall_rental_id = Number(data?.id);
+    isPayment.value = true;
+}
+
+const submit = () => {
+  formData.post(route("applications.payment"), {
+    onSuccess: () => {
+      formData.reset();
+    isPayment.value = false;
+    }
+  })
+};
+
 </script>

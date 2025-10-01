@@ -8,42 +8,42 @@
         </template>
         <h1 class="mb-8 text-3xl font-bold text-primary">Volante Rentals</h1>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <FlashMessage v-if="$page.props.flash.success" :message="$page.props.flash.success" type="success" />
+            <FlashMessage v-if="$page.props.flash.error" :message="$page.props.flash.error" type="error" />
             <div class="flex items-center justify-end mb-6 md:justify-self-center w-full">
                 <Link type="submit" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
-                :href="`/my-applications/volante-rental-permits/create`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors">Apply for New Permit</Link>
+                :href="`/my-rentals/market-volante/create`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors">Apply for New Permit</Link>
             </div>
             <BaseTable :headers="headers" :data="volanteRentals?.data">
                 <template #row="{ data }">
                     <tr v-for="(bsn, i) in data" :key="volanteRentals.id" class="hover:bg-gray-50">
-                        <td class="px-4 py-3 capitalize">{{ bsn?.permits?.permit_number ?? '-' }}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn.stalls?.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn.location }}</td>
-                        <td class="px-4 py-3 capitalize">{{ duration(bsn?.duration) }}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn.stalls?.area_of_sqr_meter }}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn.stalls?.stallsCategories.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{`${bsn.user.first_name} ${bsn.user.last_name}`}}</td>
-                        <td class="px-4 py-3 capitalize">{{`${formatDate(bsn.start_date)} - ${formatDate(bsn.end_date)}`}}</td>
-                        <td class="px-4 py-3 capitalize">
+                        <td class="px-4 py-3 capitalize text-center">{{bsn?.permits?.permit_number ? `${bsn?.permits?.permit_number }`: '-'}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{`${bsn.vendor?.first_name} ${bsn.vendor.last_name}`}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{ bsn.name }}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{bsn?.start_date && bsn?.end_date ? `${formatDate(bsn.start_date)} - ${formatDate(bsn.end_date)}` : '-' }}</td>
+                        <td class="px-4 py-3 capitalize text-center">
+                            <Badge :color="bsn?.permits?.type === 'new' ? 'green' : 'blue'">
+                                {{ bsn?.permits?.type }}
+                             </Badge>
+                        </td>
+                        <td class="px-4 py-3 capitalize text-center">{{formatAmount(bsn?.quarterly_payment)}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{formatDate(new Date(bsn?.next_payment_due))}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{formatAmount(bsn?.penalty)}}</td>
+                        <td class="px-4 py-3 capitalize text-center">
+                            <p class="font-semibold" :class="bsn?.current_payment === 'Paid' ? 'text-green-600':'text-red-600'">{{bsn?.current_payment}}</p>
+                        </td>
+                        <td class="px-4 py-3 capitalize text-center">
                              <Badge :color="status(bsn.permits.status).color">
                                 {{ status(bsn.permits.status).status }}
                              </Badge>
                         </td>
-                         <td class="px-4 py-3 capitalize">
-                            <Link class="flex items-center px-4" :href="`/my-applications/volante-rental-permits/${bsn.id}/edit`" tabindex="-1" v-if="bsn.status === 1">
-                                <icon name="download" class="block w-6 h-6 fill-primary" />
-                            </Link>
-                        </td>
-                        <td class="px-4 py-3 capitalize">
-                            <Link class="flex items-center pr-2" :href="`/my-applications/volante-rental-permits/${bsn.id}/edit`" tabindex="-1">
-                                <icon name="cheveron-right" class="block w-6 h-6 fill-primary" />
-                            </Link>
+                        <td class="w-px border-t" v-if=" props?.filters?.role !== 'user'">
+                            <Icons name="cheveron-right" @click="getDetails(bsn)" class="block w-6 h-6 fill-primary" />
                         </td>
                     </tr>
                     <tr v-if="volanteRentals?.total === 0">
-                        <td class="px-6 py-4 border-t text-center" colspan="7">No records found.</td>
+                        <td class="px-6 py-4 border-t text-center" colspan="11">No records found.</td>
                     </tr>
-
                 </template>
             </BaseTable>
         </div>
@@ -71,9 +71,10 @@ import Pagination from '@/Shared/Pagination.vue';
 import Icon from '@/Shared/Icons.vue'
 import { formatDate } from '@/data/helper';
 import Badge from '@/Shared/Badge.vue';
+import FlashMessage from '@/Shared/FlashMessage.vue';
 
 const headers = [
-    'Permit No.',
+    'Rental No.',
     'Business Name',
     'Transient/Tent',
     'Location',

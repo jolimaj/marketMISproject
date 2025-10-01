@@ -22,11 +22,17 @@
         "vue": "^3.3.13"
     },
     "dependencies": {
+        "@bundled-es-modules/pdfjs-dist": "^3.6.172-alpha.1",
         "@element-plus/icons-vue": "^2.3.1",
         "@popperjs/core": "^2.11.8",
         "chart.js": "^4.5.0",
         "element-plus": "^2.10.4",
+        "leaflet": "^1.9.4",
+        "map-geo-palengke-sample": "^1.0.8",
+        "pdf-lib": "^1.17.1",
+        "pdfjs-dist": "^5.4.149",
         "uuid": "^11.1.0",
-        "vue-chartjs": "^5.3.2"
+        "vue-chartjs": "^5.3.2",
+        "vue-signature-pad": "^3.0.2"
     }
 }

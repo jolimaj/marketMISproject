@@ -20,8 +20,9 @@ use App\Http\Controllers\RequirementListController;
 use App\Http\Controllers\UserTypeController;
 use App\Http\Controllers\SubAdminTypeController;
 use App\Http\Controllers\VerifyEmailController;
-// use App\Http\Controllers\VolanteController;
 use App\Http\Controllers\VolanteRentalController;
+use App\Http\Controllers\TablesController;
+use App\Http\Controllers\PaymentController;
 
 use App\Http\Middleware\ValidateEmailAndAge;
 use App\Http\Middleware\ValidateUser;
@@ -140,11 +141,20 @@ Route::get('department/applications/stall-rental-permits/{stallRental}', [StallR
 
 Route::get('admin/applications/volantes', [VolanteRentalController::class, 'indexApi'])->name('admin.applications.volantes.index');
 Route::get('admin/applications/volantes/create', [VolanteRentalController::class, 'createApi'])->name('admin.applications.volantes.create');
-Route::middleware([ValidateVolanteDates::class])->group(function () {
-    Route::post('admin/applications/volantes', [VolanteRentalController::class, 'storeApi'])
+Route::post('admin/applications/volantes', [VolanteRentalController::class, 'storeApi'])
     ->name('admin.applications.volantes.store');
-});
 Route::get('admin/applications/volantes/{volanteRental}/edit', [VolanteRentalController::class, 'editApi'])->name('admin.applications.volantes.edit');
 Route::put('admin/applications/volantes/{volanteRental}/update', [VolanteRentalController::class, 'updateApi'])->name('admin.applications.volantes.update');
 Route::put('admin/applications/volantes/{volanteRental}/approve', [VolanteRentalController::class, 'approveApi'])->name('admin.applications.volantes.approve');
 Route::put('admin/applications/volantes/{volanteRental}/reject', [VolanteRentalController::class, 'rejectApi'])->name('admin.applications.volantes.reject');
+
+Route::get('admin/applications/table-rental', [TablesController::class, 'indexApi'])->name('admin.applications.table.index');
+Route::get('admin/applications/table-rental/create', [TablesController::class, 'createApi'])->name('admin.applications.table.create');
+Route::post('admin/applications/table-rental', [TablesController::class, 'storeApi'])
+    ->name('admin.applications.tables.store');
+Route::get('admin/applications/table-rental/{tableRental}/edit', [TablesController::class, 'editApi'])->name('admin.applications.table.edit');
+Route::put('admin/applications/table-rental/{tableRental}/update', [TablesController::class, 'updateApi'])->name('admin.applications.table.update');
+Route::put('admin/applications/table-rental/{tableRental}/approve', [TablesController::class, 'approveApi'])->name('admin.applications.table.approve');
+Route::get('admin/applications/table-rental/{tableRental}', [TablesController::class, 'showApi'])->name('admin.applications.table.show');
+
+Route::post('admin/table-rental/payment', [PaymentController::class, 'rentalPayment']);

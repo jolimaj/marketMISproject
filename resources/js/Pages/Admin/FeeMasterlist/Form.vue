@@ -7,9 +7,9 @@
             </h2>
         </template>
          <h1 class="mb-8 text-3xl font-bold">
-          <Link class="text-primary hover:text-secondary" :href="`/admin/system-setting/stall-types`">Stall Types</Link>
+          <Link class="text-primary hover:text-secondary" :href="`/admin/system-setting/fees`">Fees</Link>
           <span class="text-secondary font-medium">/</span>
-          {{checkIfEdit() ? `${props?.stallsCategories?.name}` : 'Create New'}}
+          {{checkIfEdit() ? `${props?.feeMasterlist?.type}` : 'Create New'}}
         </h1>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
           <div class="max-w-3xl bg-white rounded-md shadow overflow-hidden">
@@ -46,7 +46,7 @@
                 </div>
               </div>
               <div class="flex items-center px-8 py-4 bg-gray-50 border-t border-gray-100">
-                <Link href="/admin/system-setting/stall-types" class="text-red-600 hover:underline" tabindex="-1">Cancel</Link>
+                <Link href="/admin/system-setting/fees" class="text-red-600 hover:underline" tabindex="-1">Cancel</Link>
                 <loading-button :loading="form.processing" class="bg-primary ml-auto" type="submit">Save</loading-button>
               </div>
           </form>

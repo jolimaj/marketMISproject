@@ -58,7 +58,9 @@ export default {
       const selected = Array.from(event.target.selectedOptions).map((o) =>
         parseInt(o.value)
       );
-      this.$emit("update:modelValue", selected);
+      // Push new IDs into array (unique)
+      const merged = Array.from(new Set([...this.modelValue, ...selected]));
+      this.$emit("update:modelValue", merged);
     },
     removeItem(id) {
       const updated = this.modelValue.filter((v) => v !== id);

@@ -2,69 +2,52 @@
 
 return [
     [
-        'name' => 'Fish Section',
-        'description' => 'For vendors selling fresh fish or seafood',
+        'name' => 'Table Rental at Fish Section ',
+        'description' => 'For vendors selling fish and other seafood',
         'is_transient' => false,
-        'fee_masterlist_ids' => '[1, 4, 5]',
+        'is_table_rental' => true,
+        'fee_masterlist_id' => 4, // Fee per table
     ],
     [
-        'name' => 'Meat Section',
-        'description' => 'For vendors selling pork, beef, or other meat cuts',
-        'is_transient' => false,
-        'fee_masterlist_ids' => '[1, 4, 5]',
-    ],
-    [
-        'name' => 'Poultry Section',
+        'name' => 'Table Rental at Poultry Section ',
         'description' => 'For chicken and other poultry product vendors',
         'is_transient' => false,
-        'fee_masterlist_ids' => '[1, 4, 5]',
+        'is_table_rental' => true,
+        'fee_masterlist_id' => 4, // Fee per table
     ],
     [
-        'name' => 'Vegetable Section',
-        'description' => 'For vegetable or root crop vendors',
+        'name' => 'Table Rental at Meat Section',
+        'description' => 'For vendors selling pork and other meat products',
         'is_transient' => false,
-        'fee_masterlist_ids' => '[1, 4, 5]',
+        'is_table_rental' => true,
+        'fee_masterlist_id' => 4, // Fee per table
     ],
     [
-        'name' => 'Fruit Section',
-        'description' => 'For fruit vendors (local or imported fruits)',
-        'is_transient' => false,
-        'fee_masterlist_ids' => '[1, 4, 5]',
-    ],
-    [
-        'name' => 'Rice and Grains Section',
-        'description' => 'For vendors selling rice, corn, and other grains',
-        'is_transient' => false,
-        'fee_masterlist_ids' => '[1, 4, 5]',
-    ],
-    [
-        'name' => 'Eatery / Carinderia Section',
-        'description' => 'For small eateries or prepared cooked food stalls',
-        'is_transient' => false,
-        'fee_masterlist_ids' => '[1, 4, 5]',
-    ],
-    [
-        'name' => 'Dry Goods',
-        'description' => 'Clothes, shoes, household items, accessories, etc.',
-        'is_transient' => false,
-        'fee_masterlist_ids' => '[1, 4, 5]',
-    ],
-    [
-        'name' => 'Transient / Volante - Poultry',
-        'description' => 'Non-permanent vendors selling meat or poultry',
+        'name' => 'Volante With Structure Constructed by the LGU (Razed by Fire) ',
+        'description' => 'For transient vendors',
         'is_transient' => true,
-        'fee_masterlist_ids' => '[1, 3]',
+        'is_table_rental' => false,
+        'fee_masterlist_id' => null,
     ],
     [
-        'name' => 'Transient / Volante - Seafood',
-        'description' => 'Non-permanent vendors (e.g., fish in styrofoam)',
+        'name' => 'Volante With Structure Constructed by Store Owner ',
+        'description' => 'For transient vendors',
         'is_transient' => true,
-        'fee_masterlist_ids' => '[1, 2]',
+        'is_table_rental' => false,
+        'fee_masterlist_id' => null,
     ],
     [
-        'name' => 'Transient / Volante - General Merchandise',
-        'description' => 'Non-permanent vendors selling mixed goods or dry items',
+        'name' => 'Volante No Structure',
+        'description' => 'For transient vendors',
         'is_transient' => true,
-        'fee_masterlist_ids' => '[1, 2]',
+        'is_table_rental' => false,
+        'fee_masterlist_id' => null,
     ],
+    [
+        'name' => 'Market Stalls',
+        'description' => 'For permanent vendors',
+        'is_transient' => false,
+        'is_table_rental' => false,
+        'fee_masterlist_id' => 5, // Fee per area of sqr meter
+    ],    
 ];

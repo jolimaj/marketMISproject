@@ -20,6 +20,7 @@ use App\Models\RequirementChecklist;
 use App\Models\StallsCategories;
 use App\Models\FeeMasterlist;
 use App\Models\User;
+use App\Models\ApprovalPermit;
 
 use App\Http\Controllers\PermitController;
 use App\Http\Controllers\RequirementController;
@@ -30,17 +31,19 @@ class StallRentalController extends Controller
 {
     public function index(Request $request): Response
     {   
-        $user =  Auth::user();
+        $user = Auth::user();
+
         $data = [
-            'filters' => $request->all('search', 'category'),
+            'filters' => $request->all('search', 'category', 'status'),
             'stallRentals' => $this->getIndexData($request),
-            'stallsCategories' => StallsCategories::whereNotIn('id', [6, 7])->get(),
+            'stallsCategories' => StallsCategories::query()->where('is_table_rental', false)
+                ->where('is_transient', false)->get(),
         ];
         return Inertia::render($user->role_id === 3 ? 'Users/Applications/StallRental'
         : 'Admin/Applications/StallRental', $data);
     }
 
-    public function show(Request $request, StallRental $stallRental): RedirectResponse
+    public function show(Request $request, StallRental $stallRental): RedirectResponse | Response
     {
         $user = Auth::user();
 
@@ -50,9 +53,9 @@ class StallRentalController extends Controller
                 'stallRental' => $this->getSingleData($stallRental),
             ]);
         }
-
-        // Otherwise, redirect or abort
-        return redirect()->route('department.applications.stalls')->with('error', 'Unauthorized access.');
+        return Inertia::render('Users/Applications/StallRental/Details', [
+                'stallRental' => $this->getSingleData($stallRental),
+        ]);
     }
 
     public function edit(StallRental $stallRental): Response|RedirectResponse
@@ -68,44 +71,61 @@ class StallRentalController extends Controller
         ));
     }
 
-    public function store(StallRentalRequest $request)
+    public function validate(StallRentalRequest $request)
     {
         $payload = $request->validated();
+        $total_payments = 0;
         // Step 1 → calculate payment
         if (isset($payload['step']) && $payload['step'] == 1) {
+
             $stall = Stall::with('stallsCategories')->findOrFail((int) $payload['stall_id']);
-            $feeMasterlist = FeeMasterlist::whereIn(
-                'id',
-                json_decode($stall->stallsCategories->fee_masterlist_ids, true)
-            )->get();
+            list($feeMasterlist, $fees_additional) = $this->prepareFees($request, $stall);
 
-            $paymentDetails = $this->calculatestallRentalPaymentFromFees(
-                $payload['started_date'],
-                $payload['end_date'],
-                $feeMasterlist->toArray()
+            $total_payments = $this->calculateStallRentalPaymentFromFees(
+                (int) $request->bulb,
+                $stall,
+                $feeMasterlist,
+                $fees_additional
             );
-
-            // Merge into existing props (no redirect)
-            return Inertia::render('Users/Applications/StallRental/Form', collect($this->getCreatePayload())
-            ->merge(['paymentDetails' => $paymentDetails])
-            ->toArray())->withViewData(['step' => 1]);
+            return Inertia::render('Users/Applications/StallRental/Form', 
+                array_merge($this->getCreatePayload(), [
+                    'total_payments' => $total_payments,
+                ]))->withViewData(['step' => 1]);
         }
 
         // Step 2 → just return current props, no changes
         if (isset($payload['step']) && $payload['step'] == 2) {
-            return Inertia::render('Users/Applications/StallRental/Form')
+            return Inertia::render('Users/Applications/StallRental/Form',
+             array_merge($this->getCreatePayload(), [
+                'requirementsPayload' => $payload['requirements'],
+                ]))
                 ->withViewData(['step' => 2]);
         }
 
-        // Step 3 → final save
+        // Step 2 → just return current props, no changes
         if (isset($payload['step']) && $payload['step'] == 3) {
-            $this->addData($payload);
-
-            return redirect()->route('applications.stalls.index')->with('success', 'Stall rental application created successfully.');
+            return Inertia::render('Users/Applications/StallRental/Form')
+                ->withViewData(['step' => 3]);
         }
 
+       
         // Default fallback
         return back()->withErrors(['step' => 'Invalid step provided.']);
+    }
+
+    public function store(StallRentalRequest $request)
+    {
+        $payload = $request->validated();
+        Log::info('StallRentalController@store request', [
+            'payload' => $payload,
+            'user_id' => Auth::id(),
+        ]);
+        // Step 1 → calculate payment
+        $payload['fees_additional'] = $payload['fees'];
+        $this->addData($payload, $request);
+
+        // Instead of redirect here, return a "success flag"
+        return back()->with('success', 'Stall rental application created successfully.');
     }
 
     public function create(): Response
@@ -172,7 +192,8 @@ class StallRentalController extends Controller
         return response()->json([
             'filters' => $request->all('search', 'stallType'),
             'stallRentals' => $stallRentals,
-            'stallsCategories' => StallsCategories::all(),
+            'stallsCategories' => StallsCategories::query()->where('is_table_rental', false)
+                ->where('is_transient', false)->get(),
         ]);
 
     }
@@ -186,8 +207,56 @@ class StallRentalController extends Controller
 
     public function storeApi(StallRentalRequest $request)
     {  
-        $stallRental = $this->addData($request->validated());
-        return response()->json(['data' => $stallRental ]);
+          $payload = $request->validated();
+        $total_payments = 0;
+        // Step 1 → calculate payment
+        if (isset($payload['step']) && $payload['step'] == 1) {
+
+            $stall = Stall::with('stallsCategories')->findOrFail((int) $payload['stall_id']);
+            list($feeMasterlist, $fees_additional) = $this->prepareFees($request, $stall);
+
+            $total_payments = $this->calculateStallRentalPaymentFromFees(
+                (int) $request->bulb,
+                $stall,
+                $feeMasterlist,
+                $fees_additional
+            );
+          
+                 return response()->json(
+             array_merge($this->getCreatePayload(), [
+                    'requirements' => $payload['requirements'],
+                     'total_payments' => $total_payments,
+                    'step' => 1
+                ]), 200);
+        }
+
+        // Step 2 → just return current props, no changes
+        if (isset($payload['step']) && $payload['step'] == 2) {
+            return response()->json(
+             array_merge($this->getCreatePayload(), [
+                    'requirements' => $payload['requirements'],
+                    'step' => 2
+                ]), 200);
+        }
+
+        // Step 2 → just return current props, no changes
+        if (isset($payload['step']) && $payload['step'] == 3) {
+            return response()->json(['step' => 3], 200);
+        }
+
+        // Step 3 → final save
+        if (isset($payload['step']) && $payload['step'] == 4) {
+            
+            $this->addData($payload, $request);
+
+            return response()->json('success', 'Stall rental application created successfully.', 200);
+
+        }
+        Log::info('StallRentalController@store step', [
+            'step' => $payload['step'] ?? null,
+        ]);
+        // Default fallback
+        return response()->json(['step' => 'Invalid step provided.'], 400);
     }
 
     public function createApi()
@@ -216,6 +285,28 @@ class StallRentalController extends Controller
         );
     }
 
+    public function approveApi(Request $request, StallRental $stallRental)
+    {
+        $rentalDetails = $this->getSingleData($stallRental);
+        $approvalDetails = $this->approve($rentalDetails);
+        return response()->json([
+            'message' => 'Stall rental approved successfully.',
+            'data' => $approvalDetails,
+        ]);
+    }
+
+    public function rejectApi(Request $request, StallRental $stallRental)
+    {
+        $request->validate([
+            'remarks' => 'required|string|max:255',
+        ]);
+        $this->disApprove($stallRental, $request->all());
+        return response()->json([
+            'message' => 'Stall rental rejected.',
+        ]);
+    }
+
+
     public function approveOrReject(Request $request, StallRental $stallRental)
     {
         $request->validate([
@@ -233,51 +324,131 @@ class StallRentalController extends Controller
         ]);
     }
 
-    private function calculatestallRentalPaymentFromFees(
-    string $startDate,
-    string $endDate,
-    array $fees
-    ) {
-        $days = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
-        $months = ceil($days / 30);
-        $total = 0;
-        $feeBreakdown = [];
+    private function prepareFees($request, $stall): array
+    {
+        // Base fee from stall category
+        $feeMasterlist = FeeMasterlist::where(
+            'id',
+            json_decode($stall->stallsCategories->fee_masterlist_id, true)
+        )->first();
 
-        foreach ($fees as $fee) {
-            $amount = (float) $fee['amount'];
-            $feeAmount = 0;
-
-            if (!empty($fee['is_daily'])) {
-                $feeAmount = $amount * $days;
-            } elseif (!empty($fee['is_monthly'])) {
-                $feeAmount = $amount * $months;
-            } else {
-                // One-time fee
-                $feeAmount = $amount;
-            }
-
-            $feeBreakdown[] = [
-                'type'   => $fee['type'],
-                'amount' => $feeAmount,
-            ];
-
-            $total += $feeAmount;
+        // Merge request fees with bulb fee if needed
+        $feesIds = $request->fees_additional ? json_decode($request->fees_additional , true) : $request->fees ?? [];
+        if (!is_array($feesIds)) {
+            $feesIds = json_decode($feesIds, true) ?? [];
         }
 
-        return [
-            'days'       => $days,
-            'months'     => $months,
-            'breakdown'  => $feeBreakdown,
-            'total'      => $total,
+        if ((int) $request->bulb > 0) {
+            $feesIds = array_merge($feesIds, [3]); // id 3 is Bulbs
+        }
+
+        // Fetch all fees from DB
+        $fees = FeeMasterlist::whereIn('id', $feesIds)->get()->map(function ($f) {
+            return [
+                'id'     => $f->id,
+                'type'   => $f->type,
+                'amount' => $f->amount,
+            ];
+        })->toArray();
+
+        return [$feeMasterlist, $fees];
+    }
+
+    private function calculateStallRentalPaymentFromFees(
+        int $bulb,
+        Stall $stall,
+        FeeMasterlist $feeMasterlist,
+        array $fees,
+        ?bool $isNotPaid = null, // make it optional
+    ) {
+        $total = 0;
+        $breakdown = [];
+
+        // Ensure fees is always an array
+        if (is_string($fees)) {
+            $fees = json_decode($fees, true);
+        }
+
+        // Compute occupancy fee (per sqm if stall)
+        if ($stall->stall_category_id === 7 && $stall->size) {
+            $size = json_decode($stall->size, true);
+            $area = $size['length'] * $size['width']; 
+            $fee = $area * $feeMasterlist->amount;
+            $breakdown[] = (object) ['type' => 'Occupancy Permit Fee', 'amount' => $fee, 'size' => $size ?
+             "{$size['length']}m x {$size['width']}m = {$area} sqm" : null];
+            $total += $fee;
+        }
+
+        // Fixed table fees
+        if (in_array($stall->stall_category_id, [1, 2, 3, 6])) {
+            $fee = $feeMasterlist->amount;
+            $breakdown[] = (object) ['type' => $feeMasterlist->type, 'amount' => $fee];
+            $total += $fee;
+        }
+
+        // Add fixed fees except bulbs
+        foreach ($fees as $fee) {
+            $type = $fee['type'];
+            $amount = $fee['amount'];
+
+            if ($type !== 'Bulbs') {
+                $breakdown[] = (object) ['type' => $type, 'amount' => $amount];
+                $total += $amount;
+            }
+        }
+
+        // Add bulb charges
+        
+        foreach ($fees as $fee) {
+            $type = $fee['type'];
+            $amount = $fee['amount'];
+
+            if ($type === 'Bulbs' && $bulb > 0) {
+                $bulbFee = $bulb * $amount;
+                $breakdown[] = (object) ['type' => "Bulbs ({$bulb} pcs)", 'amount' => $bulbFee];
+                $total += $bulbFee;
+            }
+        }
+
+         // Apply surcharge if unpaid
+        if ($isNotPaid) {
+            $surcharge = $total * 0.12;
+            $breakdown[] = (object) ['type' => '12% Surcharge (Unpaid)', 'amount' => $surcharge];
+            $total += $surcharge;
+        }
+        
+        return (object) [
+            'stall' => $stall,
+            'breakdown' => $breakdown,
+            'total' => $total,
         ];
     }
 
+    private function quarterStartDate($startDate = null)
+    {
+        if (empty($startDate)) {
+            return null;
+        }
+
+        $date = Carbon::parse($startDate);
+
+        // start of quarter for given date
+        $quarterStart = $date->firstOfQuarter();
+
+        // next quarter start
+        $nextQuarterStart = $quarterStart->copy()->addQuarter();
+
+        // set to 20th day
+        $nextQuarter20th = $nextQuarterStart->day(20);
+
+        return $nextQuarter20th->toDateString();
+    }
 
 
     private function getIndexData(Request $request) {
         $user = Auth::user();
 
-        $query = StallRental::query()->filter($request->all('search', 'category'));
+        $query = StallRental::query()->filter($request->all('search', 'category', 'type'));
 
         if ($user && $user->role_id === 3) {
             $query->myApplication($user->id);
@@ -285,6 +456,10 @@ class StallRentalController extends Controller
 
         if ($user && $user->role_id === 2) {
             $query->myApplicationUnderMyDep($user->department_id);
+            Log::info('Fetching stall rentals for department', [
+                'department_id' => $user->department_id,
+                'user_id' => $user ? $user->id : null,
+            ]);
         }
 
         return $query->paginate(10)
@@ -292,31 +467,48 @@ class StallRentalController extends Controller
                 $stall = $data->stalls;
                 $stallCategory = $stall ? $stall->stallsCategories : null;
                 $permits = $data->permits;
-                $feeMasterlist = $stallCategory ? FeeMasterlist::whereIn(
-                    'id',
-                    json_decode($stallCategory->fee_masterlist_ids, true)
-                )->get() : collect();
 
-                $paymentDetails = $this->calculatestallRentalPaymentFromFees(
-                    $data->started_date,
-                    $data->end_date,
-                    $feeMasterlist->toArray()
+                 // penalty check
+                $startDate = $data->started_date; 
+
+                $isCurrentQuarterPaid = false;
+
+                if ($startDate && !$startDate->isSameMonth(now())) {
+                    $isCurrentQuarterPaid = $data->payments()
+                        ->inCurrentQuarter()
+                        ->where('stall_rental_id', $data->id)
+                        ->exists();
+                }
+
+                // fees
+                list($feeMasterlist, $fees_additional) = $this->prepareFees($data, $stall);
+                $paymentDetails = $this->calculateStallRentalPaymentFromFees(
+                (int) $data->bulb,
+                    $stall,
+                    $feeMasterlist,
+                    $fees_additional,
+                    $isCurrentQuarterPaid
                 );
 
+                $currentPayment = $data->payments()
+                        ->withStallRental()
+                        ->thisMonth()
+                        ->get();
                 return [
+                    'vendor' => $data->user,
                     'id' => $data->id,
                     'name' => $data->business_name,
                     'status' => $data->status,
-                    'area_of_sqr_meter' => $data->area_of_sqr_meter,
-                    'start_date' => Carbon::parse($data->started_date),
-                    'end_date' => Carbon::parse($data->end_date),
+                    'start_date' => $data->started_date ? Carbon::parse($data->started_date) : null,
+                    'end_date' => $data->started_date ? Carbon::parse($data->end_date) : null,
+                    'acknowledgeContract' => $data->acknowledgeContract,
                     'stalls' => $stall ? [
                         'id' => $stall->id,
                         'name' => $stall->name,
                         'size' => $stall->size,
                         'status' => $stall->status,
                         'location' => $stall->location,
-                        'area_of_sqr_meter' => $stall->area_of_sqr_meter,
+                        'coordinates' => json_decode($stall->coordinates, true),
                         'stall_category_id' => $stall->stall_category_id,
                         'stallsCategories' => $stallCategory ? [
                             'id' => $stallCategory->id,
@@ -324,9 +516,9 @@ class StallRentalController extends Controller
                             'description' => $stallCategory->description,
                             'is_transient' => $stallCategory->is_transient,
                             'fee_masterlist_ids' => $stallCategory->fee_masterlist_ids,
-                            'fee' => FeeMasterlist::whereIn(
+                            'fee' => FeeMasterlist::where(
                                 'id',
-                                json_decode($stallCategory->fee_masterlist_ids, true)
+                               $stallCategory->fee_masterlist_id
                             )->get(),
                         ] : null,
                     ] : null,
@@ -337,7 +529,7 @@ class StallRentalController extends Controller
                         'status' => $permits->status,
                         'created_at' => $permits->created_at ? Carbon::parse($permits->created_at) : null,
                         'issued_date' => $permits->issued_date ? Carbon::parse($permits->issued_date) : null,
-                        'valid_until' => $permits->valid_until ? Carbon::parse($permits->valid_until) : null,
+                        'expiry_date' => $permits->expiry_date ? Carbon::parse($permits->expiry_date) : null,
                     ] : null,
                     'requirements' => $permits ? $permits->requirements->map(function ($requirement) {
                         return [
@@ -348,9 +540,28 @@ class StallRentalController extends Controller
                             'url' => asset('storage/uploads' . $requirement->path),
                         ];
                     }) : collect(),
-                    'payments' => $paymentDetails,
-                    'paymentRecord' => $data->payments,
-                    'user' => $data->user,
+                    'quarterly_payment' => $paymentDetails->total,
+                    'next_payment_due' => $this->quarterStartDate($permits->issued_date),
+                    'penalty' => $isCurrentQuarterPaid ? ($paymentDetails->total * 0.12) : 0,
+                    'currentPayment' => $currentPayment,
+                    'current_payment' => count($currentPayment) > 0 ? 'Paid' : 'Not Paid',
+                    'paymentDetails' => $paymentDetails,
+                    'approvals' => $permits->approvals ? $permits->approvals->map(function ($approval) {
+                        return [
+                            'id' => $approval->id,
+                            'approver' => $approval->approver ? [
+                                'id' => $approval->approver->id,
+                                'name' => $approval->approver->first_name . ' ' . $approval->approver->last_name,
+                                'email' => $approval->approver->email,
+                                'position' => $approval->approver->departmentPositions ? $approval->approver->departmentPositions->name : null
+                            ] : null,
+                            'department' => $approval->department->name,
+                            'status' => $approval->status,
+                            'created_at' => $approval->created_at ? Carbon::parse($approval->created_at) : null,
+                        ];
+                    }) : collect(),
+                    'payments_history' => $data->payments()
+                        ->withStallRental()->get()
                 ];
             })
             ->withQueryString();
@@ -358,7 +569,7 @@ class StallRentalController extends Controller
 
     private function getCreatePayload(){
         return [
-            'stallTypes' => Stall::whereNotIn('stall_category_id', [6, 7])
+            'stallTypesAll' => Stall::where('stall_category_id', 7)
                 ->get()
                 ->map(function ($data) {
                     return [
@@ -369,111 +580,162 @@ class StallRentalController extends Controller
                             'name' => $data->stallsCategories->name,
                             'description' => $data->stallsCategories->description,
                             'is_transient' => $data->stallsCategories->is_transient,
-                            'fee_masterlist_ids' => $data->stallsCategories->fee_masterlist_ids,
-                            'fee' => FeeMasterlist::whereIn(
+                            'fee_masterlist_ids' => $data->stallsCategories->fee_masterlist_id,
+                            'fee' => FeeMasterlist::where(
                                 'id', // column name
-                                json_decode($data->stallsCategories->fee_masterlist_ids, true) // array of IDs
+                                $data->stallsCategories->fee_masterlist_id // array of IDs
                             )->get(),
-                            'total_payment' => collect(json_decode(FeeMasterlist::whereIn('id', json_decode($data->stallsCategories->fee_masterlist_ids, true))->get(), true))
-                            ->sum(function ($f) {
-                                return is_array($f) && isset($f['amount']) 
-                                    ? floatval($f['amount']) 
-                                    : 0.0;
-                            }),
                         ] : null,
-                        'area_of_sqr_meter' => $data->area_of_sqr_meter,
-                        'size' => $data->size,
+                        'coordinates' => $data->coordinates ? json_decode($data->coordinates, true) : null,
+                        'size' => $data->size ? json_decode($data->size, true) : null,
                         'status' => $data->status,
                     ];
                 }),
-            'requirements' => RequirementChecklist::query()->requirementsList()
-            ];
+            'stallTypes' => Stall::where('stall_category_id', 7)->where('status', 2)
+                ->get()
+                ->map(function ($data) {
+                    return [
+                        'id' => $data->id,
+                        'name' => $data->name,
+                        'categories' => $data->stallsCategories ? [
+                            'id' => $data->stallsCategories->id,
+                            'name' => $data->stallsCategories->name,
+                            'description' => $data->stallsCategories->description,
+                            'is_transient' => $data->stallsCategories->is_transient,
+                            'fee_masterlist_ids' => $data->stallsCategories->fee_masterlist_id,
+                            'fee' => FeeMasterlist::where(
+                                'id', // column name
+                                $data->stallsCategories->fee_masterlist_id // array of IDs
+                            )->get(),
+                        ] : null,
+                        'coordinates' => $data->coordinates ? json_decode($data->coordinates, true) : null,
+                        'size' => $data->size ? json_decode($data->size, true) : null,
+                        'status' => $data->status,
+                    ];
+                }),
+            'requirements' => RequirementChecklist::query()->requirementsList(),
+            'fees' => FeeMasterlist::whereIn('id', [1, 2, 3])->get(),
+        ];
     }
 
     private function getSingleData(StallRental $stallRental) {
-        $user = Auth::user();
-
+        $user = User::find(5); //Auth::user();
         $stall = $stallRental->stalls;
-        Log::info('Fetching single stall rental data', [
-            'stall_rental_id' => $stallRental->user_id,
-            'user_id' => $user ? $user->id : null,
-            'role_id' => $user ? $user->role_id : null,
-        ]);
-        if ($user->role_id === 3 && $stallRental->user_id !== $user->id) {
-            abort(403, 'Unauthorized access.');
-        } elseif ($user->role_id === 2 && $stall && $stallRental->permits && $stallRental->permits->department_id !== $user->department_id) {
+
+        if ($user->role_id === 2 && $stall && $stallRental->permits && $stallRental->permits->department_id !== $user->department_id) {
             abort(403, 'Unauthorized access.');
         }
-        // role_id === 1 (admin) can access all, so no restriction
 
         $stallCategory = $stall ? $stall->stallsCategories : null;
         $permits = $stallRental->permits;
-        $feeMasterlist = $stallCategory ? FeeMasterlist::whereIn(
-            'id',
-            json_decode($stallCategory->fee_masterlist_ids, true)
-        )->get() : collect();
+
+        // penalty check
+        $startDate = $stallRental->started_date; 
+
+        $isCurrentQuarterPaid = false;
+
+        if ($startDate && !$startDate->isSameMonth(now())) {
+            $isCurrentQuarterPaid = $stallRental->payments()
+                ->inCurrentQuarter()
+                ->where('stall_rental_id', $stallRental->id)
+                ->exists();
+        }
+
+        // fees
+        list($feeMasterlist, $fees_additional) = $this->prepareFees($stallRental, $stall);
+        $paymentDetails = $this->calculateStallRentalPaymentFromFees(
+            (int) $stallRental->bulb,
+            $stall,
+            $feeMasterlist,
+            $fees_additional,
+            $isCurrentQuarterPaid
+        );
+
+        $currentPayment = $stallRental->payments()
+            ->withStallRental()
+            ->thisMonth()
+            ->get();
         return [
+            'vendor' => $stallRental->user,
             'id' => $stallRental->id,
             'name' => $stallRental->business_name,
             'status' => $stallRental->status,
-            'area_of_sqr_meter' => $stallRental->area_of_sqr_meter,
-            'start_date' => Carbon::parse($stallRental->started_date),
-            'end_date' => Carbon::parse($stallRental->end_date),
+            'fees_additional' => json_decode($stallRental->fees_additional, true) ?? [],
+            'bulb' => $stallRental->bulb,
+            'coordinates' => $stallRental->coordinates,
+            'start_date' => $stallRental->started_date ? Carbon::parse($stallRental->started_date) : null,
+            'end_date' => $stallRental->started_date ? Carbon::parse($stallRental->end_date) : null,
             'stalls' => $stall ? [
                 'id' => $stall->id,
                 'name' => $stall->name,
                 'size' => $stall->size,
                 'status' => $stall->status,
-                'area_of_sqr_meter' => $stall->area_of_sqr_meter,
+                'coordinates' => $stall->coordinates,
                 'stall_category_id' => $stall->stall_category_id,
                 'stallsCategories' => $stallCategory ? [
                     'id' => $stallCategory->id,
                     'name' => $stallCategory->name,
                     'description' => $stallCategory->description,
                     'is_transient' => $stallCategory->is_transient,
-                    'fee_masterlist_ids' => $stallCategory->fee_masterlist_ids,
-                    'fee' => FeeMasterlist::whereIn(            
+                    'fee_masterlist_ids' => $stallCategory->fee_masterlist_id,
+                    'fee' => FeeMasterlist::where(            
                         'id',
-                        json_decode($stallCategory->fee_masterlist_ids, true)
+                       $stallCategory->fee_masterlist_id
                     )->get(),
                 ] : null,
             ] : null,
             'permits' => $permits ? [
                 'id' => $permits->id,
-                'type' => $permits->type,
+                'type' => $permits->type === 1 ? 'New' : 'Renewal',
                 'permit_number' => $permits->permit_number,
                 'department_id' => $permits->department_id,
                 'status' => $permits->status,
                 'remarks' => $permits->remarks,
+                'attachment_signature' => $permits->attachment_signature, 
                 'assign_to' => $permits->assign_to,
                 'is_initial' => $permits->is_initial,
                 'issued_date' => $permits->issued_date ? Carbon::parse($permits->issued_date) : null,
-                'valid_until' => $permits->valid_until ? Carbon::parse($permits->valid_until) : null,
+                'expiry_date' => $permits->expiry_date ? Carbon::parse($permits->expiry_date) : null,
             ] : null,
             'requirements' => $permits ? $permits->requirements->map(function ($requirement) {
                 return [
                     'id' => $requirement->id,
-                    'attachment' => $requirement->attachment,   
+                    'attachment' => $requirement->attachment, 
+                    'name' => $requirement->requirementDetails->name,  
                     'checklist_id' => $requirement->requirement_checklist_id,
                     'url' => asset('storage/uploads' . $requirement->path),
                 ];
             }) : collect(),
-            'payments' => $this->calculatestallRentalPaymentFromFees(
-                $stallRental->started_date,
-                $stallRental->end_date,
-                $feeMasterlist->toArray()
-            ),
-            'paymentRecord' => $stallRental->payments,
-            'user' => $stallRental->user,
+            'paymentDetails' => $paymentDetails,
+            'quarterly_payment' => $paymentDetails->total,
+            'next_payment_due' => $this->quarterStartDate($permits->issued_date),
+            'penalty' => $isCurrentQuarterPaid ? ($paymentDetails->total * 0.12) : 0,
+            'current_payment' => count($currentPayment) > 0 ? 'Paid' : 'Not Paid',
+            'approvals' => $permits->approvals ? $permits->approvals->map(function ($approval) {
+                 return [
+                    'id' => $approval->id,
+                    'approver' => $approval->approver ? [
+                        'id' => $approval->approver->id,
+                        'name' => $approval->approver->first_name . ' ' . $approval->approver->last_name,
+                        'email' => $approval->approver->email,
+                        'position' => $approval->approver->departmentPositions ? $approval->approver->departmentPositions->name : null
+                    ] : null,
+                    'department' => $approval->department->name,
+                    'status' => $approval->status,
+                    'created_at' => $approval->created_at ? Carbon::parse($approval->created_at) : null,
+                ];
+            }) : collect(),
+            'payments_history' => $stallRental->payments()
+                ->withStallRental()->get()
         ];  
     }
 
-    private function addData(array $payload)
+    private function addData(array $payload, StallRentalRequest $request)
     {
         $user = Auth::user();
         
         $requirementController = new RequirementController();
-        $paymentController = new PaymentsController();
+        $paymentController = new PaymentController();
         $stallController = new StallsListController();
         $permitController = new PermitController();
 
@@ -485,66 +747,63 @@ class StallRentalController extends Controller
                     'name' => $data->name,
                     'size' => $data->size,
                     'status' => $data->status,
-                    'area_of_sqr_meter' => $data->area_of_sqr_meter,
+                    'coordinates' => $data->coordinates,
                     'stall_category_id' => $data->stall_category_id,
-                    'stallsCategories' => $data->stallsCategories ? [
-                        'id' => $data->stallsCategories->id,
-                        'name' => $data->stallsCategories->name,
-                        'description' => $data->stallsCategories->description,
-                        'is_transient' => $data->stallsCategories->is_transient,
-                        'fee_masterlist_ids' => $data->stallsCategories->fee_masterlist_ids,
-                        'fee' => FeeMasterlist::whereIn(
-                            'id', // column name
-                            json_decode($data->stallsCategories->fee_masterlist_ids, true) // array of IDs
-                        )->get(),
-                        'total_payment' => collect(json_decode(FeeMasterlist::whereIn('id', json_decode($data->stallsCategories->fee_masterlist_ids, true))->get(), true))    
-                        ->sum(function ($f) {
-                            return is_array($f) && isset($f['amount']) 
-                                ? floatval($f['amount']) 
-                                : 0.0;
-                        }),
-                    ] : null,
+                    'stallsCategories' => $data->stallsCategories,
                 ];
             })->first();
         
         $permitDetails = $permitController->addBusinessPermit($payload);
             
+        
+        $file = $request->file('attachment_signature');
+        $uuidName = Str::uuid() . '.' . $file->getClientOriginalExtension();
 
+        $path = $file->storeAs(
+            'uploads',
+            'attachment_signature-' . $payload['business_name'] . '-' . $uuidName,
+            'public'
+        );
+
+        $payload['attachment_signature'] = $path;
         $payload['user_id'] = $user->id;
         $payload['permit_id'] = $permitDetails->id;
-       
+        $payload['bulb'] = $payload['bulb'] ? $payload['bulb'] : 0;
+        $payload['fees_additional'] = !empty($payload['fees']) 
+            ? json_encode($payload['fees']) 
+            : null;
+        $payload['attachment_signature'] = 'attachment_signature-'.$payload['business_name'].'-'.$uuidName;
+        // $payload['acknowledgeContract'] = $payload['acknowledgeContract'] ? $payload['acknowledgeContract'] : true;
+
         $stallRental = StallRental::create($payload);
-        $requirements = $requirementController->addRequirements(array_map(function ($item) use ($permitDetails) {
-            $item['permit_id'] = $permitDetails->id;
-            return $item;
-        }, $payload['requirements']));
-
-        
-        $amountFee = $stall['stallsCategories']['fee']->toArray();
-        $paymentDetails = $this->calculatestallRentalPaymentFromFees(
-                $payload['started_date'],
-                $payload['end_date'],
-                $amountFee
-        );
-        Log::info('STallRental payload:', [
-            'payload' => $payload,
-            'requirements' => $requirements,
-            'paymentDetails' => $paymentDetails
-        ]);
-
-        $file = isset($payload['receipt']) ? $payload['receipt'] : null;
-        $uuidName = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('uploads', $uuidName, 'public');
-        $payments = $paymentController->addBusinessPermit([
-            'user_id' => $stallRental->user_id, // Assuming user ID is 2 for the example
+        $requirements = $payload['requirements'] ?? [];
+        Log::info('Adding requirements to StallRental', [
+            'reques' => $payload,
             'stall_rental_id' => $stallRental->id,
-            'receipt' => $uuidName,
-            'date' => Carbon::now()->format('Y-m-d'),
-            'amount' => isset($payload['amount']) ? $payload['amount'] : 0,
-            'reference_number' => isset($payload['reference_number']) ? $payload['reference_number'] : null,
-            'status' => isset($payload['receipt']) ? 1 : 2, // 1 - Paid, 2 - Pending, 3 - Failed
-        ]);
+            'permit_id' => $permitDetails->id,
+            'requirements_count' => count($requirements),
+            ]);
+        if (!empty($requirements)) {
+      
+            $requirements = $requirementController->addRequirements(
+            array_map(function ($item) use ($permitDetails) {
+                // Make sure required keys exist
+                return [
+                'permit_id' => $permitDetails->id,
+                'requirement_checklist_id' => $item['requirement_checklist_id'] ?? null,
+                'attachment' => $item['attachment'] ?? null,
+                ];
+            }, $requirements)
+            );
+            Log::info('Requirements added successfully', [
+            'stall_rental_id' => $stallRental->id,
+            'permit_id' => $permitDetails->id,
+            ]);
+        }
+        
+        $amountFee = $payload['total_payment'] ?? 0;
 
+        // Update stall to Reserved
         $stallController->statusUpdate(
             new Request(['status' => 3]),
             Stall::findOrFail((int) $payload['stall_id'])
@@ -554,8 +813,6 @@ class StallRentalController extends Controller
             'stallRental' => $stallRental,
             'permitDetails' => $permitDetails,
             'requirements' => $requirements,
-            'paymentDetails' => $paymentDetails,
-            'payments' => $payments,
         ];
     }
 
@@ -563,31 +820,50 @@ class StallRentalController extends Controller
     {
         $stallRental->fill($payload)->save();
 
-        // If stall_id is changed, update the stall status
-        if (isset($payload['stall_id']) && $payload['stall_id'] != $stallRental->stall_id) {
-            $stallController = new StallsListController();
+        $stallController = new StallsListController();
+        $permitController = new PermitController();
+
+        // If stall_id is changed → old stall to available (e.g. 3), new stall to reserved (2)
+        if (isset($payload['stall_id']) && $payload['stall_id'] != $stallRental->getOriginal('stall_id')) {
+            // Update old stall (release it, example: status = 3 or whatever "available" is)
+            if ($stallRental->getOriginal('stall_id')) {
+                $stallController->statusUpdate(
+                    new Request(['status' => 2]),
+                    Stall::findOrFail((int) $stallRental->getOriginal('stall_id'))
+                );
+            }
+
+            // Update new stall (set to reserved = 2)
             $stallController->statusUpdate(
                 new Request(['status' => 3]),
                 Stall::findOrFail((int) $payload['stall_id'])
             );
+        } else {
+            // If stall_id didn’t change → still update the current stall to status = 2
+            $stallController->statusUpdate(
+                new Request(['status' => 3]),
+                Stall::findOrFail((int) $stallRental->stall_id)
+            );
         }
 
-        // Update requirements if present in payload
+        // Update requirements if present
         if (isset($payload['requirements']) && is_array($payload['requirements'])) {
             $requirementController = new RequirementController();
+            $permitController->update([
+                'assign_to' => 2, // assign to approver
+                'is_initial' => false
+            ], $stallRental->id);
             foreach ($payload['requirements'] as $requirementData) {
                 if (isset($requirementData['id'])) {
-                    // Update existing requirement
                     $requirementController->updateRequirement($requirementData['id'], $requirementData);
                 } else {
-                    // Add new requirement (attach to permit if possible)
                     $requirementData['permit_id'] = $stallRental->permit_id;
                     $requirementController->addRequirements([$requirementData]);
                 }
             }
         }
 
-        Log::info('stall Rental updated successfully.', [
+        Log::info('Stall Rental updated successfully.', [
             'id' => $stallRental->id,
             'updated_data' => $stallRental->toArray()
         ]);
@@ -595,15 +871,27 @@ class StallRentalController extends Controller
         return $stallRental;
     }
 
-      private function disApprove($stallRental, array $payload) {
+
+    private function disApprove($stallRental, array $payload) {
+        $user = Auth::user();
+        $approvalPermitController = new ApprovalPermitController();
+
+        $approvalPermitController->storeApproval(
+            $stallRental->permit_id, 
+            $stallRental->permits->department_id,
+            $user->id,
+            2
+        );
         $this->updateData($stallRental, ['status' => 3]);
-        $PermitController = new PermitController();
-        $PermitController->update([
+        $permitController = new PermitController();
+        $permitController->update([
                 'status' => 2, //rejected
                 'remarks' => $payload['remarks'],
                 'assign_to' => 1, // 1 = user
                 'is_initial' => false, // set to false when forwarded to user
             ], $stallRental->permit_id);
+        // Send SMS or Email notification to user about approval
+        // Notification::send($stallRental->user, new StallRentalApproved($stallRental));
     }
 
     private function approve($stallRental) {
@@ -611,52 +899,34 @@ class StallRentalController extends Controller
         $permit = (object)$stallRental['permits'];
 
         $currentDeptId = $permit->department_id; // Approver's department
-        // PMO->MTO->PMO
         $approvalPermitController = new ApprovalPermitController();
         $approvalPermitController->storeApproval(
             $permit->id, 
-            $currentDeptId,
             $currentDeptId,
             $user->id
         );
         $permitController = new PermitController();
 
-        // STEP 1: Initial → Send to MTO
+        // STEP 1: Initial → SMPO
         if ($permit->is_initial) {
-            $permitController->update([
-                'department_id' => 2,
-                'assign_to' => 2,
+             $permitController->update([
+                'department_id' => 3, // Office of the Mayor
+                'assign_to' => 2, // assign to approver
                 'is_initial' => false
             ], $permit->id);
            
-            return response()->json(['message' => 'Initial approval done. Sent to MTO.']);
+            return response()->json(['message' => 'Office of Public Market Initial approval done. Sent to Office of the Mayor.']);
         }
 
-        // STEP 2: MTO → Send to Market
-        if ($currentDeptId === 2 && $permit->status == 0) {
+        // STEP 3: Office of the Mayor >   Market → Final Approval
+        if (!$permit->is_initial && $currentDeptId === 3 && $permit->status == 0) {
              $permitController->update([
-                'department_id' => 12,
+                'department_id' => 2, // Office of the Public Market
             ], $permit->id);
-
-            return response()->json(['message' => 'MTO approved. Sent to Office of the Mayor.']);
-        }
-
-        // STEP 3: Office of the Mayor → Send to Market
-        if ($currentDeptId === 12 && $permit->status == 0) {
-             $permitController->update([
-                'department_id' => 10,
-            ], $permit->id);
-
-            return response()->json(['message' => 'Office of the Mayor approved. Sent to Public Market.']);
-        }
-
-        // STEP 4: Market → Final Approval
-        if ($currentDeptId == 10 && $permit->status == 0) {
             
             $requiredDepartments = [
-                2,
-                10,
-                12,
+                2, // Public Market
+                3, // OFFICE OF THE MUNICIPAL MAYOR
             ];
 
             $approvedDepartments = ApprovalPermit::where('permit_id', $permit->id)
@@ -671,11 +941,12 @@ class StallRentalController extends Controller
             }
 
             // Finalize approval
-            $this->permitController->update([
+            $permitController->update([
                 'status'        => 1, // Approved
-                'issued_date'   => now()->format('Y-m-d'),
+                'issued_date'   => Carbon::now()->format('Y-m-d'),
+                'expiry_date'   => Carbon::now()->copy()->addYears(3)->toDateString(),
                 'assign_to'     => 1,
-                'permit_number' => $permit->generatePermitNumber(10),
+                'permit_number' => $permitController->generatePermitNumber(10),
                 'department_id' => null
             ], $permit->id);
 
@@ -688,6 +959,9 @@ class StallRentalController extends Controller
                 Stall::findOrFail((int) $stallRental->stall_id)
             );
         }
+
+        // Send SMS or Email notification to user about approval
+        // Notification::send($stallRental->user, new StallRentalApproved($stallRental));
         return [
             'message' => 'Volante rental approved successfully.',
             'stallRental' => $stallRental,
@@ -695,4 +969,5 @@ class StallRentalController extends Controller
         ];
 
     }
+    
 }

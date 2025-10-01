@@ -29,6 +29,19 @@
                     <InputError class="mt-2" :message="form?.errors?.name" />
                 </div>
               </div>
+              <div class="flex flex-col gap-4 px-5">
+                <div class="w-full">
+                    <InputLabel for="description" value="Description" />
+                      <textarea
+                        id="remarks"
+                        v-model="form.description"
+                        rows="3"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
+                            focus:border-red-500 focus:ring-red-500 sm:text-sm resize-none"
+                    ></textarea>
+                    <InputError class="mt-2" :message="form?.errors?.description" />
+                </div>
+              </div>
               <div class="flex items-center px-8 py-4 bg-gray-50 border-t border-gray-100">
                 <Link href="/admin/system-setting/requirements" class="text-red-600 hover:underline" tabindex="-1">Cancel</Link>
                 <loading-button :loading="form.processing" class="bg-primary ml-auto" type="submit">Save</loading-button>
@@ -63,6 +76,7 @@ const checkIfEdit = () => {
 
 const form = useForm({ 
   name: checkIfEdit() ? props?.requirementsList?.name : '',
+  description: checkIfEdit() ? props?.requirementsList?.description : '',
 });
 
 

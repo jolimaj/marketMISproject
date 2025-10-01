@@ -1,20 +1,7 @@
 <!-- Any Inertia page or normal Vue route -->
 <template>
     <AppLayout title="Stalls">
-         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-            <!-- <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
-                <div class="bg-orange-100 text-orange-600 p-3 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v12a2 2 0 01-2 2z" />
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-primary text-sm font-bold">Business Permit Today Applicants</p>
-                    <p class="text-2xl font-bold text-orange-600">{{props?.todayBusinessCount}}</p>
-                </div>
-            </div> -->
-
+         <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
             <!-- Volante -->
             <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
                 <div class="bg-green-100 text-green-600 p-3 rounded-full">
@@ -24,12 +11,12 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-primary text-sm font-bold">Volante Today Applicants</p>
+                    <p class="text-gray-600 text-sm font-bold">Pending Market Volante Applicants – Today</p>
                     <p class="text-2xl font-bold text-green-600">{{todayVolanteCount}}</p>
                 </div>
             </div>
 
-            <!-- Stall Rentals -->
+            <!-- Table Spaces -->
             <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
                 <div class="bg-purple-100 text-purple-600 p-3 rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -38,8 +25,22 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-primary text-sm font-bold">Stall Rental Today Applicants</p>
-                    <p class="text-2xl font-bold text-purple-600">{{todayStallCount}}</p>
+                    <p class="text-gray-600 text-sm font-bold">Pending Table Space Applicants – Today</p>
+                    <p class="text-2xl font-bold text-purple-600">{{todayTableCount}}</p>
+                </div>
+            </div>
+
+            <!-- Stall Rentals -->
+            <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
+                <div class="bg-orange-100 text-orange-600 p-3 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 10h18M4 6h16M4 14h16M4 18h16" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-bold">Pending Stall Leasing Applicants – Today</p>
+                    <p class="text-2xl font-bold text-orange-600">{{todayStallCount}}</p>
                 </div>
             </div>
         </div>
@@ -52,7 +53,7 @@
                         legend: { position: 'top' },
                         title: {
                         display: true,
-                        text: 'Monthly Applicants',
+                        text: 'Monthly Lease Applications',
                         },
                     }
                 }"/>
@@ -65,7 +66,7 @@
                     legend: { position: 'right' },
                     title: {
                     display: true,
-                    text: 'Permit Application Overview',
+                    text: 'Rental Application Status Overview',
                     },
                 },
                 }"/>
@@ -88,36 +89,36 @@ const props = defineProps({
     volantePermitMonthlyCounts: Array,
     stallPermitMonthlyCounts: Array,
     permitStatusCounts: Array,
-    todayBusinessCount: Number,
     todayStallCount: Number,
     todayVolanteCount: Number,
+    todayTableCount: Number,
 });
 
 const barData = {
   labels: props?.businessPermitMonthlyCounts.map((item) => item.month),
   datasets: [
-    // {
-    //     label: 'Business Permits',
-    //     backgroundColor: '#6366F1',
-    //     data: props?.businessPermitMonthlyCounts.map((item) => item.total)
-    // },
     {
-        label: 'Volante Permits',
-        backgroundColor: '#10B981',
+        label: 'Stall Leasing',
+        backgroundColor: '#F59E0B',
+        data: props?.stallPermitMonthlyCounts.map((item) => item.total)
+    },
+    {
+        label: 'Table Spaces',
+        backgroundColor: '#6366F1',
         data: props?.volantePermitMonthlyCounts.map((item) => item.total)
     },
     {
-        label: 'Stall Rental Permits',
-        backgroundColor: '#F59E0B',
-        data: props?.stallPermitMonthlyCounts.map((item) => item.total)
-    }
+        label: 'Market Volante',
+        backgroundColor: '#10B981',
+        data: props?.volantePermitMonthlyCounts.map((item) => item.total)
+    },
   ]
 }
 
 const pieData = {
   labels: props.permitStatusCounts.map((item) => item.label),
   datasets: [{
-    label: 'Stalls',
+    label: 'Applications',
     data: props.permitStatusCounts.map((item) => item.total),
     backgroundColor: ['#6366F1', '#10B981', '#F59E0B', '#EF4444'],
   }]

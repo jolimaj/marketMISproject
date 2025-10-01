@@ -212,13 +212,13 @@ const getPageName = () => {
     const myParam = getRouteName();
     switch (myParam.toLowerCase()) {
         case 'sub-admin':
-            pageName = 'Department Admins'
+            pageName = 'Admins'
             break;
         case 'inspector':
             pageName = 'Inspectors'
         break;  
         default:
-            pageName = 'All Users'
+            pageName = 'Vendors'
             break;
     }
     return pageName;

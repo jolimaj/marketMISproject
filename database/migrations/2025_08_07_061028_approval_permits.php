@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // OIC PMO, 
+        // Office of the Mayor
+        // Notary Public
+        // MTO
+        // PMO
         Schema::create('approval_permits', function (Blueprint $table) {
             $table->id();
             $table->integer('permit_id');

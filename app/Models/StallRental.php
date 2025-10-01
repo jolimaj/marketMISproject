@@ -19,6 +19,11 @@ class StallRental extends Model
         'started_date',
         'end_date',
         'status',
+        'acknowledgeContract',
+        'attachment_signature',
+        'bulb',
+        'fees_additional',
+        'total_payment',
     ];
 
     public function stalls(): BelongsTo   
@@ -65,6 +70,10 @@ class StallRental extends Model
             $query->whereHas('stalls.stallsCategories', function ($q) use ($category) {
                 $q->where('id',  $category);
             });
+        })->when($filters['type'] ?? null, function ($query, $status) {
+            $query->whereHas('permits', function ($q) use ($status) {
+                $q->where('type',  $status);
+            });
         });
     }
 
@@ -90,7 +99,7 @@ class StallRental extends Model
 
     public function scopeMyApplicationUnderMyDep($query, $depID){
         return $query->whereHas('permits', function ($q) use ($depID) {
-                $q->where('department_id',  $depID)->where('assign_to',  2);
+            $q->where('department_id', $depID)->where('assign_to',  2);
         });
     }
 }

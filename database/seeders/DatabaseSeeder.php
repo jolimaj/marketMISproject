@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             StallCategorySeeder::class,
             StallSeeder::class,
             RequirementChecklistCategorySeeder::class,
-            // UserSeeder::class,
+            DepartmentPositionSeeder::class,
         ]);
     }
 }

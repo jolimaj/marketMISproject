@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <!-- <title inertia>{{ config('app.name', 'Laravel') }}</title> -->
-        <title>MARKETIS</title>
+        <title>MARKETMIS</title>
 
         <!-- Fonts -->
         <link rel="icon" href="{{ asset('images/marketIS-logo.ico') }}" type="image/x-icon">

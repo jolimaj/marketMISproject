@@ -6,8 +6,10 @@
                 Stalls
             </h2>
         </template>
-        <h1 class="mb-8 text-3xl font-bold text-primary">Stalls</h1>
+        <h1 class="mb-8 text-3xl font-bold text-primary">Rental Space</h1>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <FlashMessage v-if="$page.props.flash.success" :message="$page.props.flash.success" type="success" />
+            <FlashMessage v-if="$page.props.flash.error" :message="$page.props.flash.error" type="error" />
             <div class="flex items-center justify-between mb-6">
              <search-filter v-model="form.search" class="mr-4 w-full max-w-md" @reset="reset">
                 <label class="block text-gray-700">Stall Category:</label>
@@ -21,15 +23,13 @@
                 </select>
             </search-filter>
                 <Link type="submit" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
-                :href="`/admin/system-setting/stalls/create`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors">Add Stall</Link>
+                :href="`/admin/system-setting/rental-space/create`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors">Create New</Link>
             </div>
             <BaseTable :headers="headers" :data="stalls?.data">
                 <!-- Optional: Customize header -->
                 <template #header>
-                    <th class="px-4 py-3 text-left">Stall ID</th>
                     <th class="px-4 py-3 text-left">Name</th>
                     <th class="px-4 py-3 text-left">Size</th>
-                    <th class="px-4 py-3 text-left">Area of Square Meter</th>
                     <th class="px-4 py-3 text-left">Category</th>
                     <th class="px-4 py-3 text-left">Fee</th>
                     <th class="px-4 py-3 text-left">Status</th>
@@ -38,12 +38,10 @@
                 <!-- Optional: Customize rows -->
                 <template #row="{ data }">
                     <tr v-for="(stall, i) in data" :key="stalls.id" class="hover:bg-gray-50">
-                        <td class="px-4 py-3">{{ stall.id }}</td>
                         <td class="px-4 py-3 capitalize">{{ stall.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{`Longitude: ${JSON.parse(stall.size)?.long}, Latitude: ${JSON.parse(stall.size)?.lat}`}}</td>
-                        <td class="px-4 py-3 capitalize">{{stall.area_of_sqr_meter}}</td>
+                        <td class="px-4 py-3 capitalize">{{stall?.size ? `${JSON.parse(stall.size)?.length} X ${JSON.parse(stall.size)?.width}` : '-'}}</td>
                         <td class="px-4 py-3 capitalize">{{stall.categories.name}}</td>
-                        <td class="px-4 py-3" v-html="handleFeesChange(stall.categories?.fee) ? handleFeesChange(stall.categories?.fee) : 'No Fees'"></td>
+                        <td class="px-4 py-3">{{ handleFeesChange(stall?.fee) }}</td>
                         <td class="px-4 py-3 capitalize">
                              <Badge :color="status(stall.status).color">
                                 {{ status(stall.status).status }}
@@ -85,9 +83,10 @@ import Pagination from '@/Shared/Pagination.vue';
 import SearchFilter from '@/Shared/SearchFilter.vue'
 import Badge from '@/Shared/Badge.vue'
 import Icon from '@/Shared/Icons.vue'
+import { formatAmount } from '@/data/helper';
+import FlashMessage from '@/Shared/FlashMessage.vue';
 
 const headers = [
-    'ID',
     'Name',
     'Admins'
 ];
@@ -107,7 +106,7 @@ const form = reactive({
 watch(
   form,
   throttle(() => {
-    router.get(`/admin/system-setting/stalls`, pickBy(form), { preserveState: true })
+    router.get(`/admin/system-setting/rental-space`, pickBy(form), { preserveState: true })
   }, 150),
   { deep: true }
 );
@@ -145,30 +144,15 @@ function reset() {
 }
 
 function handleFeesChange(fees) {
+    if(fees?.id=== 5){
+        return ` ${formatAmount(fees?.amount)} for every area of square meter`;
+    }
 
-    return fees.map(fee => {
-        const { is_daily, is_monthly, is_styro, is_per_kilo, type, amount } = fee;
-        const amountValue = ` ₱${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
-        if(is_styro && is_per_kilo && is_daily) {
-            return `Per styrofoam of product: ${amountValue}/day`;
-        }
+    if(fees?.id=== 4){
+        return ` ${formatAmount(fees?.amount)} for every table`;
+    }
 
-        if(is_per_kilo && is_daily) {
-            return `Per kilo of product: ${amountValue}/day`;
-        }
-
-        if(!is_monthly && !is_daily && !is_styro && !is_per_kilo) {
-            return `One time monthly fee: ${amountValue}`   ;
-        }
-        
-        if(is_daily && !is_monthly && !is_styro && !is_per_kilo) {
-            return `Daily Occupancy Fee: ${amountValue}`;
-        }
-
-        return `Table Fee:${amountValue}/Month`;
-
-        }).join('<br>');
-
+    return '-';
 
 }
 </script>

@@ -11,26 +11,20 @@
             <BaseTable :headers="headers" :data="fees?.data">
                 <!-- Optional: Customize header -->
                 <template #header>
-                    <th class="px-4 py-3 text-center">Name</th>
-                    <th class="px-4 py-3 text-center">Amount</th>
-                    <th class="px-4 py-3 text-center">Daily</th>
-                    <th class="px-4 py-3 text-center">Monthly</th>
-                    <th class="px-4 py-3 text-center">Per kilo(For Transient or Volante)</th>
-                    <th class="px-4 py-3 text-center">Per styrofoam(For Transient or Volante)</th>
-                    <th class="px-4 py-3 text-center"></th>
+                    <th class="px-4 py-3 text-left">Name</th>
+                    <th class="px-4 py-3 text-left">Amount</th>
+                    <th class="px-4 py-3 text-left">Description</th>
+                    <th class="px-4 py-3 text-left"></th>
                 </template>
 
                 <!-- Optional: Customize rows -->
                 <template #row="{ data }">
                     <tr v-for="(fee, i) in data" :key="fees.id" class="hover:bg-gray-50">
-                        <td class="px-4 py-3 capitalize text-center">{{ fee?.type }}</td>
-                        <td class="px-4 py-3 capitalize text-center">{{ `₱${Number(fee.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` }}</td>
-                        <td class="px-4 py-3 capitalize text-center">{{ fee?.is_daily ? 'Yes' : 'No' }}</td>               
-                        <td class="px-4 py-3 capitalize text-center">{{ fee?.is_monthly ? 'Yes' : 'No' }}</td>               
-                        <td class="px-4 py-3 capitalize text-center">{{ fee?.is_per_kilo ? 'Yes' : 'No' }}</td>               
-                        <td class="px-4 py-3 capitalize text-center">{{ fee?.is_styro ? 'Yes' : 'No' }}</td>               
+                        <td class="px-4 py-3 capitalize text-left">{{ fee?.type }}</td>
+                        <td class="px-4 py-3 capitalize text-left">{{ `₱${Number(fee.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` }}</td>
+                        <td class="px-4 py-3 capitalize text-left">{{ fee?.description }}</td>                            
                         <td class="w-px border-t">
-                            <Link class="flex items-center px-4" :href="route('admin.fees.edit', fee?.id)" tabindex="-1">
+                            <Link class="flex items-left px-4" :href="route('admin.fees.edit', fee?.id)" tabindex="-1">
                                 <icon name="cheveron-right" class="block w-6 h-6 fill-primary" />
                             </Link>
                         </td>

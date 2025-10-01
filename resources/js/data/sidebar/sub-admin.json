@@ -10,12 +10,17 @@
     "link": "/department/applications",
     "children": [
       {
-        "label": "Stall Rental",
+        "label": "Stall Leasing",
         "icon": "stalls",
         "link": "/department/applications/stall-rental-permits"
       },
       {
-        "label": "Volante Rental",
+        "label": "Table Spaces",
+        "icon": "table",
+        "link": "/department/applications/table-rental-permits"
+      },
+            {
+        "label": "Market Volante",
         "icon": "volante-type",
         "link": "/department/applications/volante-rental-permits"
       }

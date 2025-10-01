@@ -16,6 +16,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Cache\RateLimiter;
 
 use App\Http\Controllers\StallRentalController;
+use App\Http\Controllers\TablesController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\VolanteRentalController;
 use App\Http\Controllers\PermitController;
@@ -31,6 +32,7 @@ class AccountsController extends Controller
         }
 
         $stallRentalController = new StallRentalController();
+        $tablesController = new TablesController();
         $businessController = new BusinessController();
         $volanteRentalController = new VolanteRentalController();
         $permitController = new PermitController();
@@ -40,7 +42,7 @@ class AccountsController extends Controller
             'businessPermitMonthlyCounts' => $businessController->countMonthlyApplicants(),
             'stallPermitMonthlyCounts' => $stallRentalController->countMonthlyApplicants(),
             'volantePermitMonthlyCounts' => $volanteRentalController->countMonthlyApplicants(),
-            'todayBusinessCount' => $businessController->countTodayApplicants(),
+            'todayTableCount' => $tablesController->countTodayApplicants(),
             'todayStallCount' => $stallRentalController->countTodayApplicants(),
             'todayVolanteCount' => $volanteRentalController->countTodayApplicants(),
             'permitStatusCounts' => $permitController->countPerStatus(),
@@ -64,7 +66,7 @@ class AccountsController extends Controller
         if ($user->role_id === 1) {
             $redirectUrl = '/admin/dashboard';
         } elseif ($user->role_id === 3) {
-            $redirectUrl = '/dashboard';
+            $redirectUrl = '/my-rentals/stall-leasing';
         } elseif ($user->role_id === 2) {
             $redirectUrl = '/department/dashboard';
         } else {

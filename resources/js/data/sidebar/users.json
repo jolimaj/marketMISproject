@@ -1,23 +1,23 @@
 [
   {
-    "label": "Dashboard",
-    "icon": "home",
-    "link": "/dashboard"
-  },
-  {
-    "label": "My Applications",
+    "label": "My Rentals",
     "icon": "applications",
-    "link": "/my-applications",
+    "link": "/my-rentals",
     "children": [
       {
-        "label": "Stall Rental",
+        "label": "Stall Leasing",
         "icon": "stalls",
-        "link": "/my-applications/stall-rental-permits"
+        "link": "/my-rentals/stall-leasing"
       },
       {
-        "label": "Volante Rental",
+        "label": "Table Spaces",
+        "icon": "table",
+        "link": "/my-rentals/table-spaces"
+      },
+      {
+        "label": "Market Volante",
         "icon": "volante-type",
-        "link": "/my-applications/volante-rental-permits"
+        "link": "/my-rentals/market-volante"
       }
     ]
   }

@@ -19,5 +19,13 @@ export default defineConfig({
     ],
     define: {
         __VUE_PROD_DEVTOOLS__: true // should be false for production only
+    },
+    build: {
+        rollupOptions: {
+            output: {
+            manualChunks: undefined, // optional tweak to control chunking
+        },
+    },
+                cssCodeSplit: true, // ensures CSS is split and loaded with JS
     }
 });

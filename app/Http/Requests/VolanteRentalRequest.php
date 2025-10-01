@@ -34,34 +34,28 @@ class VolanteRentalRequest extends FormRequest
 
         return [
             'step' => ['integer'],
-            'stall_id' => [$isCreate ? 'required' : 'nullable', 'integer'],
+            'stall_id' => [$isCreate ? 'required' : 'nullable', 'integer', 'exists:stalls,id'],
+            
             'business_name' => [
                 $isCreate ? 'required' : 'nullable',
                 'string',
                 'max:255',
-                Rule::unique('volantes', 'business_name')->ignore($volanteRentalId, 'id')
+                Rule::unique('stall_rentals')->ignore($volanteRentalId)
             ],
-            'quantity' => [$isCreate ? 'required' : 'nullable', 'numeric', 'min:1'],
-            'location' => ['nullable', 'string', 'max:500'],
-            'duration' => [$isCreate ? 'required' : 'nullable', 'integer', 'in:1,2,3'],
-            'started_date' => [$isCreate ? 'required' : 'nullable', 'date'],
-            'end_date' => [$isCreate ? 'required' : 'nullable', 'date', 'after_or_equal:started_date'],
+            'attachment_signature' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
             'requirements' => ['nullable','array'],
-
             'requirements.*.requirement_checklist_id' => [
                 'integer',
                 'exists:requirement_checklists,id'
             ],
-
             'requirements.*.attachment' => [
                 $isCreate ? 'required' : 'nullable',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
                 'max:2048'
             ],
-            'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
-            'reference_number' => ['nullable', 'string', 'max:255'],
-            'amount' => ['numeric','decimal:0,2'],
+            'fees' => ['nullable','array'],
+            'bulb' => ['nullable','integer','min:0'],
         ];
     }
 

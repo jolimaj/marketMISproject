@@ -146,54 +146,80 @@
             stroke-linecap="round" stroke-linejoin="round"/>
     <rect x="3" y="11" width="8" height="1" rx="0.5" fill="currentColor"/>
 </svg>
-<svg  v-else-if="name === 'business-names'"  xmlns="http://www.w3.org/2000/svg"
-     viewBox="0 0 24 24"
-     width="24" height="24"
-     aria-label="Business icon">
-  <!-- Shop body -->
-  <rect x="3" y="8" width="18" height="12" rx="2" />
-  <!-- Awning / roof -->
-  <path d="M4 8l2-3h12l2 3" />
-  <!-- Door -->
-  <path d="M9 20v-5h4v5" />
-  <!-- Windows / signage -->
-  <path d="M5.5 12h4M14.5 12h4" />
-</svg>
-<svg v-else-if="name === 'stall-names'"xmlns="http://www.w3.org/2000/svg"
-     viewBox="0 0 24 24"
-     fill="currentColor"
-     width="24" height="24"
-     aria-label="Stall icon">
+<svg  v-else-if="name === 'business-names'" xmlns="http://www.w3.org/2000/svg" 
+     viewBox="0 0 64 64" 
+     width="64" height="64" 
+     fill="none" stroke="currentColor" 
+     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+     aria-hidden="true">
   <!-- Roof -->
-  <path d="M3 7l3-3h12l3 3" />
-  <!-- Awning panels -->
-  <path d="M3 7h18v4H3z" />
-  <!-- Stall counter -->
-  <rect x="4" y="13" width="16" height="7" rx="1.5" />
-  <!-- Support posts -->
-  <path d="M4 11v2M20 11v2" />
+  <path d="M8 20 L32 8 L56 20 Z" />
+  <!-- Store body -->
+  <rect x="12" y="20" width="40" height="32" rx="2" ry="2"/>
+  <!-- Door -->
+  <rect x="28" y="36" width="8" height="16"/>
+  <!-- Windows -->
+  <rect x="16" y="28" width="8" height="6"/>
+  <rect x="40" y="28" width="8" height="6"/>
 </svg>
-<svg v-else-if="name === 'business-category'" xmlns="http://www.w3.org/2000/svg"
-     viewBox="0 0 24 24"
-     fill="currentColor"
-     width="24" height="24"
-     aria-label="Category icon">
-  <!-- Main tag -->
-  <path d="M3 7l7-4 7 4v10l-7 4-7-4V7z" />
-  <!-- Secondary tag behind -->
-  <path d="M10 3v18" opacity="0.4" />
-  <path d="M17 7v10" opacity="0.4" />
+
+<svg v-else-if="name === 'stall-names'" xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 64 64"
+     width="64" height="64"
+     fill="none" stroke="currentColor"
+     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+     aria-hidden="true">
+  <!-- Stall outline -->
+  <rect x="12" y="20" width="40" height="28" rx="2" ry="2"/>
+  
+  <!-- Signboard / nameplate -->
+  <rect x="18" y="10" width="28" height="8" rx="1" ry="1"/>
+  <line x1="22" y1="14" x2="42" y2="14"/>
+  
+  <!-- Table legs -->
+  <line x1="20" y1="48" x2="20" y2="56"/>
+  <line x1="44" y1="48" x2="44" y2="56"/>
 </svg>
-<svg v-else-if="name === 'business-size'" xmlns="http://www.w3.org/2000/svg"
-     viewBox="0 0 24 24"
-     fill="currentColor"
-     width="24" height="24"
-     aria-label="Size icon">
-  <!-- Square / box -->
-  <rect x="6" y="6" width="12" height="12" rx="1" />
-  <!-- Outward arrows -->
-  <path d="M3 3l3 3M21 3l-3 3M3 21l3-3M21 21l-3-3" />
+
+<svg v-else-if="name === 'business-category'" xmlns="http://www.w3.org/2000/svg" 
+     viewBox="0 0 64 64" 
+     width="64" height="64" 
+     fill="currentColor" stroke="currentColor" 
+     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+     aria-hidden="true">
+  <!-- Canopy -->
+  <rect x="8" y="8" width="48" height="12" rx="2" ry="2" />
+  <!-- Hanging lines (like stall partitions) -->
+  <line x1="16" y1="20" x2="16" y2="36"/>
+  <line x1="32" y1="20" x2="32" y2="36"/>
+  <line x1="48" y1="20" x2="48" y2="36"/>
+  <!-- Table counter -->
+  <rect x="12" y="36" width="40" height="12" rx="2" ry="2"/>
+  <!-- Legs -->
+  <line x1="20" y1="48" x2="20" y2="56"/>
+  <line x1="44" y1="48" x2="44" y2="56"/>
 </svg>
+
+<svg v-else-if="name === 'business-size'" xmlns="http://www.w3.org/2000/svg" 
+     viewBox="0 0 64 64" 
+     width="64" height="64" 
+     fill="none" stroke="currentColor" 
+     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+     aria-hidden="true">
+  <!-- Stall outline -->
+  <rect x="12" y="12" width="40" height="40" rx="2" ry="2"/>
+  
+  <!-- Width arrow -->
+  <line x1="16" y1="54" x2="48" y2="54"/>
+  <polyline points="16,50 12,54 16,58"/>
+  <polyline points="48,50 52,54 48,58"/>
+  
+  <!-- Height arrow -->
+  <line x1="54" y1="16" x2="54" y2="48"/>
+  <polyline points="50,16 54,12 58,16"/>
+  <polyline points="50,48 54,52 58,48"/>
+</svg>
+
 <svg v-else-if="name === 'business-area'" xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 24 24"
      fill="currentColor"
@@ -205,6 +231,39 @@
   <!-- m² text (stylized with paths) -->
   <path d="M7 15v-4l1.5 2 1.5-2v4" /> <!-- 'm' -->
   <path d="M12 11h2v2h-2z" />          <!-- small square for '²' -->
+</svg>
+
+<svg v-else-if="name === 'vendor'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Vendors"> 
+
+  <!-- Awning --> 
+
+  <path d="M4 7h16l-1.6-3.2A2 2 0 0 0 16.6 2H7.4A2 2 0 0 0 5.6 3.8L4 7z"/> 
+
+  <!-- Scallops --> 
+
+  <path d="M4 7c0 1.7 1.3 3 3 3s3-1.3 3-3"/> 
+
+  <path d="M10 7c0 1.7 1.3 3 3 3s3-1.3 3-3"/> 
+
+  <path d="M16 7c0 1.7 1.3 3 3 3s3-1.3 3-3"/> 
+
+  <!-- Counter / Stall body --> 
+
+  <rect x="4" y="10" width="16" height="8" rx="1.5"/> 
+
+  <!-- Person badge (vendor) --> 
+
+  <circle cx="9" cy="15" r="1.6"/> 
+
+  <path d="M6.8 18.5a3.4 3.4 0 0 1 4.4 0"/> 
+
+</svg> 
+<!-- simple-table.svg -->
+<svg v-else-if="name === 'table'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"  aria-hidden="true">
+  <rect x="8" y="18" width="48" height="14" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="3"/>
+  <rect x="16" y="32" width="32" height="4" fill="currentColor"/>
+  <rect x="12" y="36" width="4" height="14" fill="currentColor"/>
+  <rect x="48" y="36" width="4" height="14" fill="currentColor"/>
 </svg>
 
 </template>

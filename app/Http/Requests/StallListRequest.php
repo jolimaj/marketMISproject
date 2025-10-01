@@ -16,7 +16,9 @@ class StallListRequest extends FormRequest
                 ? Rule::unique('stalls')->ignore($stall) // ignore if editing
                 : Rule::unique('stalls')],
             'size' => 'max:255',
-            'area_of_sqr_meter' => 'required|string|max:255'
+            'coordinates' => 'max:255',
+            'stall_category_id' => 'required|integer',
+            'location_description' => 'max:255',
         ];
     }
 }

@@ -6,12 +6,14 @@
                 Stalls
             </h2>
         </template>
-        <h1 class="mb-8 text-3xl font-bold text-primary">Stalls</h1>
+        <h1 class="mb-8 text-3xl font-bold text-primary">Stall Leasing</h1>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <FlashMessage v-if="$page.props.flash.success" :message="$page.props.flash.success" type="success" />
+            <FlashMessage v-if="$page.props.flash.error" :message="$page.props.flash.error" type="error" />
             <div class="flex items-center justify-between mb-6">
              <search-filter v-model="form.search" class="mr-4 w-full max-w-md" @reset="reset">
                 <label class="block text-gray-700">Stall Category:</label>
-                <select v-model="form.category" class="form-select mt-1 w-full">
+                <select v-model="form.status" class="form-select mt-1 w-full">
                     <option :value="null">All</option>
                     <option
                         v-for="categories in stallsCategories"
@@ -21,14 +23,26 @@
                 </select>
             </search-filter>
             </div>
-            <BaseTable :headers="headers" :data="stallRentals?.data">
+            <BaseTable :headers="headers" :data="stallRentals?.data" :class="'center'">
                 <template #row="{ data }">
                     <tr v-for="(bsn, i) in data" :key="stallRentals.id" class="hover:bg-gray-50">
-                        <td class="px-4 py-3 capitalize">{{`${bsn.user.first_name} ${bsn.user.first_name}`}}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{ bsn.stalls.name }}</td>
-                        <td class="px-4 py-3 capitalize">{{bsn?.start_date && bsn?.end_date ? `${formatDate(bsn.start_date)} - ${formatDate(bsn.end_date)}` : '-' }}</td>
-                        <td class="px-4 py-3 capitalize">
+                        <td class="px-4 py-3 capitalize text-center">{{bsn?.permits?.permit_number ? `${bsn?.permits?.permit_number }`: '-'}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{`${fullName(bsn?.vendor)}`}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{ bsn.name }}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{ bsn?.stalls?.name }}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{bsn?.start_date && bsn?.end_date ? `${formatDate(bsn.start_date)} - ${formatDate(bsn.end_date)}` : '-' }}</td>
+                        <td class="px-4 py-3 capitalize text-center">
+                            <Badge :color="bsn?.permits?.type === 'new' ? 'green' : 'blue'">
+                                {{ bsn?.permits?.type }}
+                             </Badge>
+                        </td>
+                        <td class="px-4 py-3 capitalize text-center">{{formatAmount(bsn?.quarterly_payment)}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{formatDate(new Date(bsn?.next_payment_due))}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{formatAmount(bsn?.penalty)}}</td>
+                        <td class="px-4 py-3 capitalize text-center">
+                            <p class="font-semibold" :class="bsn?.current_payment === 'Paid' ? 'text-green-600':'text-red-600'">{{bsn?.current_payment}}</p>
+                        </td>
+                        <td class="px-4 py-3 capitalize text-center">
                              <Badge :color="status(bsn.permits.status).color">
                                 {{ status(bsn.permits.status).status }}
                              </Badge>
@@ -38,7 +52,7 @@
                         </td>
                     </tr>
                     <tr v-if="stallRentals?.total === 0">
-                        <td class="px-6 py-4 border-t text-center" colspan="7">No records found.</td>
+                        <td class="px-6 py-4 border-t text-center" colspan="12">No records found.</td>
                     </tr>
                 </template>
             </BaseTable>
@@ -56,7 +70,7 @@
                         <!-- Car Icon -->
                         <Icons name="stalls" class="block w-6 h-6 fill-primary" />
                         <div>
-                        <p class="font-semibold text-primary">{{ `Stall Rental Application (${drawerData?.permits?.type})` }}</p>
+                        <p class="font-semibold text-primary">{{ `Stall Leasing Application (${drawerData?.permits?.type})` }}</p>
                         <div class="flex items-center text-xs text-gray-500 space-x-2">
                             <!-- Status Badge -->
                             <Badge :color="status(drawerData?.permits.status).color">
@@ -72,25 +86,22 @@
                         <button class="flex items-center px-3 py-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 text-sm" @click="rejectPermits">
                         <!-- Reject SVG -->
                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 
-                            011.414 0L10 8.586l4.293-4.293a1 1 0 
-                            111.414 1.414L11.414 10l4.293 4.293a1 1 
-                            01-1.414 1.414L10 11.414l-4.293 4.293a1 
-                            1 0 01-1.414-1.414L8.586 10 4.293 
-                            5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd" 
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" 
+                            clip-rule="evenodd" />
                         </svg>
+
                         Reject
                         </button>
                         <form @submit.prevent="approveConfirm">
                             <button class="flex items-center px-3 py-1.5 text-white bg-green-600 rounded-lg hover:bg-green-700 text-sm">
                             <!-- Approve SVG -->
-                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 
-                                010 1.414l-8 8a1 1 0 
-                                01-1.414 0l-4-4a1 1 0 
-                                011.414-1.414L8 12.586l7.293-7.293a1 1 
-                                0 011.414 0z" clip-rule="evenodd"/>
+                           <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" 
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
+                                    clip-rule="evenodd"/>
                             </svg>
+
                             Approve
                             </button>
                         </form>
@@ -99,82 +110,81 @@
 
                     <!-- Applicant Information -->
                     <div class="p-4 border rounded-xl mb-5">
-                        <h3 class="text-md font-semibold mb-3 text-primary">Applicant Information</h3>
+                        <h3 class="text-md font-semibold mb-3 text-primary">Vendor Information</h3>
                         <ul class="space-y-2 text-sm">
                             <li class="flex items-center space-x-2">
                             <!-- User SVG -->
-                            <svg class="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 2a5 5 0 100 
-                                10 5 5 0 000-10zM2 18a8 8 0 
-                                1116 0H2z" clip-rule="evenodd"/>
+                            <svg class="w-4 h-4 text-secondary font-bold" fill="none" xmlns="http://www.w3.org/2000/svg" 
+                                viewBox="0 0 64 64" width="64" height="64"
+                                 stroke="currentColor" stroke-width="2" 
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="32" cy="20" r="8"/>
+                            <path d="M16 52c0-8 8-14 16-14s16 6 16 14"/>
                             </svg>
+
                             <span>
                                 <strong class="text-secondary">Full Name: </strong>
-                                <span class="text-gray-600"> {{`${drawerData?.user?.first_name} ${drawerData?.user?.last_name}` }}</span>
+                                <span class="text-gray-600"> {{`${fullName(drawerData?.vendor)}` }}</span>
                             </span>
                             </li>
                             <li class="flex items-center space-x-2">
                             <!-- Email SVG -->
-                            <svg class="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M2.94 6.34A2 2 0 
-                                014 6h12a2 2 0 
-                                011.06.34L10 11 2.94 6.34z"/>
-                                <path d="M18 8l-8 5-8-5v6a2 2 0 
-                                002 2h12a2 2 0 002-2V8z"/>
+                            <svg class="w-4 h-4 text-secondary" fill="none" xmlns="http://www.w3.org/2000/svg" 
+                                viewBox="0 0 64 64" width="64" height="64"
+                               stroke="currentColor" stroke-width="2" 
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="10" y="16" width="44" height="32" rx="4" ry="4"/>
+                            <polyline points="10,16 32,36 54,16"/>
                             </svg>
+
                             <span>
                                 <strong class="text-secondary">Email Address: </strong>
-                                <span class="text-gray-600"> {{drawerData?.user?.email}}</span>
+                                <span class="text-gray-600"> {{drawerData?.vendor?.email}}</span>
                             </span>
                             </li>
                             <li class="flex items-center space-x-2">
                             <!-- Phone SVG -->
-                            <svg class="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M2 3a1 1 0 
-                                011-1h2a1 1 0 011 1v2a1 1 0 
-                                01-1 1H4v2.586a1 1 0 
-                                01-.293.707l-.707.707a1 1 0 
-                                000 1.414l3 3a1 1 0 
-                                001.414 0l.707-.707A1 1 0 
-                                019 12.586V10h2a1 1 0 
-                                011 1v2a1 1 0 01-1 1H9.414a1 1 
-                                0 00-.707.293l-2 2A1 1 0 
-                                006 17.414V18a1 1 0 01-1 1H3a1 
-                                1 0 01-1-1V3z"/>
+                            <svg class="w-4 h-4 text-secondary" fill="none" xmlns="http://www.w3.org/2000/svg" 
+                                viewBox="0 0 64 64" width="64" height="64"
+                                 stroke="currentColor" stroke-width="2" 
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="20" y="8" width="24" height="48" rx="4" ry="4"/>
+                                <circle cx="32" cy="50" r="2"/>
                             </svg>
-                        <span>
+
+                                <span>
                                 <strong class="text-secondary">Phone Number: </strong>
-                                <span class="text-gray-600"> {{drawerData?.user?.mobile}}</span>
+                                <span class="text-gray-600"> {{drawerData?.vendor?.mobile}}</span>
                             </span>
                             </li>
                             <li class="flex items-center space-x-2">
-                                <!-- Calendar SVG -->
-                                <svg class="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 2a6 6 0 
-                                00-6 6c0 4.418 6 10 6 10s6-5.582 
-                                6-10a6 6 0 00-6-6zm0 8a2 2 0 
-                                110-4 2 2 0 010 4z" clip-rule="evenodd"/>
+                                <svg class="w-4 h-4 text-secondary" xmlns="http://www.w3.org/2000/svg" 
+                                    viewBox="0 0 64 64" width="64" height="64"
+                                    fill="none" stroke="currentColor" stroke-width="2" 
+                                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M32 8c-8 0-14 6-14 14 0 10 14 26 14 26s14-16 14-26c0-8-6-14-14-14z"/>
+                                <circle cx="32" cy="22" r="4"/>
                                 </svg>
                                 <span>
                                     <strong class="text-secondary">Address: </strong>
-                                    <span class="text-gray-600"> {{drawerData?.user?.address}}</span>
+                                    <span class="text-gray-600"> {{drawerData?.vendor?.address}}</span>
                                 </span>
                             </li>
                             <li class="flex items-center space-x-2">
-                                <!-- Calendar SVG -->
-                                <svg class="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 2a1 1 0 00-1 1v1a1 1 0 
-                                    002 0V3a1 1 0 00-1-1zM6 5a2 2 0 
-                                    114 0v1H6V5zm6 0a2 2 0 114 0v1h-4V5zM4 
-                                    9a2 2 0 012-2h8a2 2 0 012 2v2H4V9zm-1 
-                                    4h14a1 1 0 011 1v2a2 2 0 
-                                    01-2 2H5a2 2 0 
-                                    01-2-2v-2a1 1 0 
-                                    011-1z"/>
+                                <svg class="w-4 h-4 text-secondary" xmlns="http://www.w3.org/2000/svg" 
+                                    viewBox="0 0 64 64" width="64" height="64"
+                                    fill="none" stroke="currentColor" stroke-width="2" 
+                                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="10" y="14" width="44" height="40" rx="4" ry="4"/>
+                                <line x1="10" y1="24" x2="54" y2="24"/>
+                                <line x1="22" y1="8" x2="22" y2="20"/>
+                                <line x1="42" y1="8" x2="42" y2="20"/>
+                                <circle cx="32" cy="38" r="4"/>
                                 </svg>
+
                                 <span>
                                     <strong class="text-secondary">Birthday: </strong>
-                                    <span class="text-gray-600"> {{formatDateShort(drawerData?.user?.birthday)}}</span>
+                                    <span class="text-gray-600"> {{formatDateShort(drawerData?.vendor?.birthday)}}</span>
                                 </span>
                             </li>
                         </ul>
@@ -185,7 +195,7 @@
                         <ul class="space-y-2 text-sm">
                             <li class="flex items-center space-x-2">
                             <!-- User SVG -->
-                            <Icons name="business-names" class="block w-6 h-6 fill-secondary" />
+                            <Icons name="business-names" class="w-4 h-4 text-secondary"/>
                             <span>
                                 <strong class="text-secondary">Business Name: </strong>
                                 <span class="text-gray-600">{{ drawerData?.name }}</span>
@@ -193,7 +203,7 @@
                             </li>
                             <li class="flex items-center space-x-2">
                             <!-- Email SVG -->
-                            <Icons name="stall-names" class="block w-6 h-6 fill-secondary" />
+                            <Icons name="stall-names" class="w-4 h-4 text-secondary" />
                             <span>
                                 <strong class="text-secondary">Stall Name: </strong>
                                 <span class="text-gray-600"> {{drawerData?.stalls?.name}}</span>
@@ -201,50 +211,30 @@
                             </li>
                             <li class="flex items-center space-x-2">
                             <!-- Phone SVG -->
-                            <Icons name="business-category" class="block w-6 h-6 fill-secondary" />
+                            <Icons name="business-category" class="w-4 h-4 text-secondary" />
                             <span>
                                 <strong class="text-secondary">Category: </strong>
                                 <span class="text-gray-600"> {{drawerData?.stalls?.stallsCategories?.name}}</span>
                             </span>
                             </li>
                             <li class="flex items-center space-x-2">
-                                <svg class="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 2a6 6 0 
-                                00-6 6c0 4.418 6 10 6 10s6-5.582 
-                                6-10a6 6 0 00-6-6zm0 8a2 2 0 
-                                110-4 2 2 0 010 4z" clip-rule="evenodd"/>
-                                </svg>
-                                <span>
-                                    <strong class="text-secondary">Stall Location </strong>
-                                    <span class="text-gray-600"> {{ drawerData?.stalls?.location }}</span>
-                                </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
                                 <!-- Calendar SVG -->
-                                <Icons name="business-size" class="block w-6 h-6 fill-secondary" />
+                                <Icons name="business-size" class="w-4 h-4 text-secondary" />
                                 <span>
-                                    <strong class="text-secondary">Size: </strong>
-                                    <span class="text-gray-600"> {{`Longitude: ${JSON.parse(drawerData.stalls?.size)?.long}, Latitude: ${JSON.parse(drawerData.stalls?.size)?.lat}`}}</span>
-                                </span>
-                            </li>
-                             <li class="flex items-center space-x-2">
-                                <!-- Calendar SVG -->
-                                <Icons name="business-area" class="block w-6 h-6 fill-secondary" />
-                                <span>
-                                    <strong class="text-secondary">Area of Square Meter: </strong>
-                                    <span class="text-gray-600"> {{drawerData?.stalls?.area_of_sqr_meter}}</span>
+                                    <strong class="text-secondary">Stall Size: </strong>
+                                    <span class="text-gray-600"> {{drawerData?.stalls?.size ? `${JSON.parse(drawerData?.stalls.size)?.length} X ${JSON.parse(drawerData?.stalls.size)?.width}` : '-'}}</span>
                                 </span>
                             </li>
                         </ul>
                     </div>
                      <!-- Requirements Submitted -->
                     <div class="p-4 border rounded-xl mb-5">
-                        <h3 class="text-md font-semibold mb-3 text-primary">Requirements Submitted</h3>
-                        <ul class="space-y-2">
+                        <h3 class="text-sm font-semibold mb-3 text-primary">Requirements Submitted</h3>
+                        <ul class="space-y-2 text-sm ">
                                 <li v-for="(doc, i) in drawerData.requirements" :key="i" class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg shadow-sm">
                                 <div class="flex items-center space-x-2">
                                     <Icons name="requirements" class="block w-6 h-6 fill-primary" />
-                                    <span class="text-gray-600">{{ doc.name }}</span>
+                                    <span class="text-gray-600 text-sm">{{ doc.name }}</span>
                                 </div>
 
                                 <button class="flex items-center px-2 py-1 text-blue-600 hover:text-blue-800 text-sm">
@@ -261,43 +251,48 @@
                             </ul>
                     </div>
                      <!-- Payments -->
-                    <div class="p-4 border rounded-xl">
+                    <div class="p-4 border rounded-xl mb-5">
                         <h3 class="text-md font-semibold mb-3 text-primary">Payments</h3>
                          <ul class="space-y-2 text-sm">
                             <li class="flex items-center space-x-2">
-                            <span>
-                                <strong class="text-secondary">Days: </strong>
-                                <span class="text-gray-600"> {{`${drawerData?.payments?.days}` }}</span>
-                            </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                              <span>
-                                <strong class="text-secondary">Months: </strong>
-                                <span class="text-gray-600"> {{`${drawerData?.payments?.months}` }}</span>
-                                </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                            <ul class="space-y-2">
-                                <li v-for="(doc, i) in drawerData?.payments?.breakdown" :key="i" class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg shadow-sm">
-                                <div class="flex items-center space-x-2">
-                                   <span>
-                                        <strong class="text-secondary">{{`• ${doc?.type}: `}} </strong>
-                                        <span class="text-gray-600"> {{formatAmount(doc?.amount)}}</span>
-                                    </span>
-                                </div>
-                                </li>
-                            </ul>
+                                <ul class="space-y-2">
+                                    <li v-for="(doc, i) in drawerData?.paymentDetails?.breakdown" :key="i" class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg shadow-sm">
+                                    <div class="flex items-center space-x-2">
+                                    <span>
+                                            <strong class="text-secondary">{{`• ${doc?.type}: `}} </strong>
+                                            <span class="text-gray-600"> {{formatAmount(doc?.amount)}}</span>
+                                        </span>
+                                    </div>
+                                    </li>
+                                </ul>
                             </li>
                             <li class="flex items-center space-x-2">
                                 <span>
                                     <strong class="text-secondary">Total: </strong>
-                                    <span class="text-gray-600"> {{formatAmount(drawerData?.payments?.total)}}</span>
+                                    <span class="text-gray-600"> {{formatAmount(drawerData?.quarterly_payment)}}</span>
                                 </span>
                             </li>
                         </ul>
-                    </div>   
-                </div>
-                   
+                    </div>
+                     <!-- Approvals -->
+                    <div class="p-4 border rounded-xl" v-if="drawerData?.approvals?.length > 0">
+                        <h3 class="text-md font-semibold mb-3 text-primary">Approvals</h3>
+                         <ul class="space-y-2 text-sm">
+                            <li class="flex items-center space-x-2">
+                                <ul class="space-y-2">
+                                    <li v-for="(approval, i) in drawerData?.approvals" :key="i" class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg shadow-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <span>
+                                            <strong class="text-secondary">{{`${approval?.department}: `}} </strong>
+                                            <span class="text-gray-600"> {{`${approval?.approver?.name}(${approval?.approver?.position})`}}</span>
+                                        </span>
+                                    </div>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>      
+                </div>                   
             </div>
             </template>
         </Drawer>
@@ -318,7 +313,7 @@
                         <div>
                             <textarea
                                 id="remarks"
-                                v-model="form.remarks"
+                                v-model="forms.remarks"
                                 rows="3"
                                 required
                                 placeholder="Enter your reason for rejection..."
@@ -338,7 +333,8 @@
                     <form @submit.prevent="rejectConfirm">
 
                         <DangerButton
-                            :disabled="!form.remarks"
+                            :disabled="!forms.remarks"
+                            @click="rejectConfirm"
                             class="disabled:opacity-50"
                         >
                             Reject
@@ -358,7 +354,8 @@ import {
 import {
     formatAmount,
     formatDate,
-    formatDateShort
+    formatDateShort,
+    fullName
 } from '@/data/helper';
 import {
     router,
@@ -377,12 +374,19 @@ import Drawer from '@/Components/Drawer.vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
+import FlashMessage from '@/Shared/FlashMessage.vue';
 
 const headers = [
-    'Applicants Name',
+    'Rental No.',
+    'Vendor',
     'Business Name',
-    'Stall Name',
-    'Duration Date',
+    'Stall',
+    'Duration',
+    'Type',
+    'Quarterly Payment',
+    'Due Date',
+    'Penalty',
+    'Current Payment',
     'Status', ''];
 
 const showDrawer = ref(false)
@@ -399,6 +403,7 @@ const props = defineProps({
 const form = reactive({ 
     search: props?.filters?.search,
     category: props?.filters?.category,
+    status: props?.filters?.status,
 });
 
 const forms= useForm({ 
@@ -408,7 +413,7 @@ const forms= useForm({
 watch(
   form,
   throttle(() => {
-    router.get(props.auth.user?.role_id === 1 ? '/admin/applications/stalls' : '/department/applications/stall-rental-permits', pickBy(form), { preserveState: true })
+    router.get(props.auth.user?.role_id === 1 ? '/admin/rental-management/stall-leasing' : '/department/rental-management/stall-leasing', pickBy(form), { preserveState: true })
   }, 150),
   { deep: true }
 );
@@ -458,21 +463,34 @@ const status = (stat) => {
     return statuss;
 };
 
+
 const closeRejection = () => {
     isRejected.value = false;
+    showDrawer.value = true;
 };
 
 const rejectPermits = () => {
+    showDrawer.value = false;
     isRejected.value = true;
 };
 
 const approveConfirm = () => {
     delete forms.remarks;
     forms.put(route('department.applications.stalls.approve', drawerData?.value?.id));
+    showDrawer.value = false;
 };
 
 const rejectConfirm = () => {
-    delete forms.remarks;
-    forms.put(route('department.applications.stalls.reject', drawerData?.value?.id));
+    console.log('ss')
+    forms.put(
+        route('department.applications.stalls.reject', drawerData?.value?.id),
+        {
+            onSuccess: () => {
+                forms.reset()
+                showDrawer.value = false
+            },
+        }
+    )
 };
+
 </script>

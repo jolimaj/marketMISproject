@@ -10,6 +10,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Notifications\CustomResetPassword;
 use App\Models\ApprovalPermit;
@@ -41,6 +42,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'gender_id',
         'department_id',
         'user_type_id',
+        'department_position_id',
         'mobile',
         'email',
         'password',
@@ -95,6 +97,10 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Department::class);
     }
 
+    public function departmentPositions(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentPosition::class, 'department_position_id');
+    }
 
     public function userType(): BelongsTo
     {
@@ -125,7 +131,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         switch ($role) {
             case 'admin': return $query->where('role_id', 1);
-            case 'user': return $query->where('role_id', 3)->where('user_type_id', '=', null);
+            case 'vendor': return $query->where('role_id', 3)->where('user_type_id', '=', null);
             case 'sub-admin': return $query->where('role_id', 2);
             case 'inspector': return $query->where('role_id', 3)->where('user_type_id', 3);
         }
@@ -177,7 +183,6 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getEmailForPasswordReset()
     {
-        // Default behavior - you can customize this if needed
         return $this->email;
         
         // Example customizations:
@@ -222,17 +227,25 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->getPendingPermitsCount();
     }
 
-    public function totalStallForDepApproval()
+    public function totalStallForDepApproval($departmentId)
     {
-        return \App\Models\StallRental::whereHas('permits', function ($q) {
-        $q->where('department_id', $this->department_id)
-          ->where('assign_to', 2);
+        return \App\Models\StallRental::whereHas('permits', function ($q) use ($departmentId) {
+        $q->where('permits.department_id', $departmentId)
+          ->where('permits.assign_to', 2);
         })->count();
     }
 
     public function totalVolanteForDepApproval()
     {
         return \App\Models\Volante::whereHas('permits', function ($q) {
+            $q->where('department_id', $this->department_id)
+            ->where('assign_to', 2);
+        })->count();
+    }
+
+    public function totalTableForDepApproval()
+    {
+        return \App\Models\TableRental::whereHas('permits', function ($q) {
             $q->where('department_id', $this->department_id)
             ->where('assign_to', 2);
         })->count();

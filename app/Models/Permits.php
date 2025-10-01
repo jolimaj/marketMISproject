@@ -34,5 +34,9 @@ class Permits extends Model
         return $this->hasMany(Requirement::class,  'permit_id');
     }
 
-    
+    public function approvals()
+    {
+        return $this->hasMany(ApprovalPermit::class,  'permit_id');
+    }
+
 }

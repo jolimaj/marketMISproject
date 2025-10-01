@@ -2,6 +2,11 @@
 <template>
     <AppLayout title="Stalls">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+            <StallsMap @stall-select="onStallSelect" />
+        </div>
+
+        <!-- <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
           <h1 class="mb-8 text-3xl font-bold text-primary">{{`Welcome, ${user?.name}!`}}</h1>
           <div class="max-w-3xl bg-white rounded-md shadow overflow-hidden">
             
@@ -9,7 +14,6 @@
            <div class="grid grid-cols-1">
             <div class="bg-white rounded-2xl shadow p-4 flex items-center space-x-4">
                 <div class="bg-green-100 text-green-600 p-2 rounded-full">
-                    <!-- Green Shield Icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 3l8 4v5c0 5.25-3.25 9.75-8 11-4.75-1.25-8-5.75-8-11V7l8-4z" />
@@ -44,7 +48,6 @@
                 </div>
             </div>
 
-            <!-- Stall Rentals -->
             <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
                 <div class="bg-purple-100 text-purple-600 p-3 rounded-full">
                     <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -63,7 +66,6 @@
                 </div>
             </div>
 
-            <!-- Volante -->
             <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
                 <div class="bg-green-100 text-green-600 p-3 rounded-full">
                     <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -82,7 +84,6 @@
                 </div>
             </div>
 
-            <!-- Volante -->
             <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
                 <div class="bg-green-100 text-green-600 p-3 rounded-full">
                     <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -102,7 +103,6 @@
           </div>
           <h2 class="mb-8 text-3xl font-bold text-primary">Recent Applications</h2>
            <BaseTable :headers="headers" :data="myTopApply">
-                <!-- Optional: Customize rows -->
                 <template #row = "{ data }">
                     <tr v-for="(stall, i) in data" :key="stall.type" class="hover:bg-gray-50">
                         <td class="px-4 py-3">{{ stall.type }}</td>
@@ -124,7 +124,7 @@
                     </tr>
                 </template>
             </BaseTable>
-        </div>
+        </div> -->
     </AppLayout>
 </template>
 
@@ -136,6 +136,7 @@ import Badge from '@/Shared/Badge.vue';
 import BaseTable from '@/Shared/BaseTable.vue';
 import { data } from 'autoprefixer';
 import { Link } from '@inertiajs/vue3';
+import StallsMap from '@/Shared/Maps/StallsMap.vue';
 
 const props = defineProps({
     user: Object,

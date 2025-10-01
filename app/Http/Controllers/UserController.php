@@ -421,7 +421,7 @@ class UserController extends Controller
                 'type' => 'Volante',
                 'created_at' => $volante->created_at,
                 'status' => $volante->permits->status,
-                'stall' => $stall->stalls->name,
+                // 'stall' => $stall->stalls->name,
                 'data' => $volante,
             ] : null,
             ])->filter() // remove nulls
@@ -434,8 +434,9 @@ class UserController extends Controller
         Log::info('Fetching application counts for user', ['user_id' => $user->id]);
 
         $dashboardData = [
-            'totalStall' => $user->totalStallForDepApproval(),
+            'totalStall' => $user->totalStallForDepApproval($user->department_id),
             'totalVolante' => $user->totalVolanteForDepApproval(),
+            'totalTable' => $user->totalTableForDepApproval(),
             'total' => $user->totalApprovedApplications(),
         ];
         return $dashboardData;
@@ -460,7 +461,7 @@ class UserController extends Controller
                 'type' => 'Volante',
                 'created_at' => $volante->created_at,
                 'status' => $volante->permits->status,
-                'stall' => $stall->stalls->name,
+                // 'stall' => $stall->stalls->name,
                 'data' => $volante,
             ] : null,
             $permit ? [

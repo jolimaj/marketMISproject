@@ -32,16 +32,18 @@ class StallsListController extends Controller
                     'name' => $stall->name,
                     'stall_category_id' => $stall->stall_category_id,
                     'size' => $stall->size,
-                    'area_of_sqr_meter' => $stall->area_of_sqr_meter,
+                    'coordinates' => $stall->coordinates,
+                    'location_description' => $stall->location_description,
+                    'is_occupied' => $stall->is_occupied,
+                    'fee_masterlist_id' => $stall->stallsCategories->fee_masterlist_id ?? null,
+                    'fee' => FeeMasterlist::find($stall->stallsCategories->fee_masterlist_id ),
                     'status' => $stall->status,
                     'categories' => $stall->stallsCategories ?
                     [
                         'id' => $stall->stallsCategories->id,
                         'name' => $stall->stallsCategories->name,
                         'description' => $stall->stallsCategories->description,
-                        'is_transient' => $stall->stallsCategories->is_transient,
-                        'fee_masterlist_ids' => $stall->stallsCategories->fee_masterlist_ids,
-                        'fee' => FeeMasterlist::whereIn('id', json_decode($stall->stallsCategories->fee_masterlist_ids, true))->get(),
+                        'is_transient' => $stall->stallsCategories->is_transient,   
                     ] : null,
                 ]),
         ]);
@@ -54,22 +56,26 @@ class StallsListController extends Controller
             'stallsCategories' => StallsCategories::all(),
             'stalls' => Stall::query()
                 ->filter($request->only('search', 'category'))
+                ->where('status', 2) // Only get vacant stalls
                 ->get()
                 ->transform(fn ($stall) => [
-                    'id' => $stall->id,
+                   'id' => $stall->id,
                     'name' => $stall->name,
                     'stall_category_id' => $stall->stall_category_id,
                     'size' => $stall->size,
-                    'area_of_sqr_meter' => $stall->area_of_sqr_meter,
+                    'coordinates' => $stall->coordinates,
+                    'location_description' => $stall->location_description,
+                    'is_occupied' => $stall->is_occupied,
                     'status' => $stall->status,
                     'categories' => $stall->stallsCategories ?
                     [
                         'id' => $stall->stallsCategories->id,
                         'name' => $stall->stallsCategories->name,
                         'description' => $stall->stallsCategories->description,
-                        'is_transient' => $stall->stallsCategories->is_transient,
-                        'fee_masterlist_ids' => $stall->stallsCategories->fee_masterlist_ids,
-                        'fee' => FeeMasterlist::whereIn('id', json_decode($stall->stallsCategories->fee_masterlist_ids, true))->get(),
+                        'is_transient' => $stall->stallsCategories->is_transient,   
+                        'is_table' => $stall->stallsCategories->is_table,
+                        'fee_masterlist_id' => $stall->stallsCategories->fee_masterlist_id ?? null,
+                        'fee' => FeeMasterlist::find($stall->stallsCategories->fee_masterlist_id ),   
                     ] : null,
                 ]),
         ]);
@@ -79,18 +85,18 @@ class StallsListController extends Controller
     {
         return Inertia::render('Admin/Stalls/Form', [
             'stallsCategories' => StallsCategories::all(),
+            'feeMasterlist' => FeeMasterlist::whereNotIn('id', [1, 2, 3])->get(),
         ]);
     }
 
     public function store(StallListRequest $request): RedirectResponse
     {
         $user =  Auth::user();
-        Stall::create([
-            'name' => $request['name'],
-            'stall_category_id' => $request['stall_category_id'],
-            'size' => $request['size'],
-            'area_of_sqr_meter' => $request['area_of_sqr_meter']
+        Log::info('Login attempt', [
+            '$user' => $user,
+            '$request' => $request->validated()
         ]);
+        Stall::create($request->validated() + ['created_by' => $user->id]);
         
         return redirect()->route('admin.stalls')->with('success', 'Stall created successfully.');
     }
@@ -102,12 +108,18 @@ class StallsListController extends Controller
         ]);
         return Inertia::render('Admin/Stalls/Form', [
             'stallsCategories' => StallsCategories::all(),
+            'feeMasterlist' => FeeMasterlist::whereNotIn('id', [1, 2, 3])->get(),
             'stall' => [
                 'id' => $stall->id,
                 'name' => $stall->name,
-                'size' => $stall->size,
-                'area_of_sqr_meter' => $stall->area_of_sqr_meter,
                 'stall_category_id' => $stall->stall_category_id,
+                'size' => $stall->size,
+                'coordinates' => $stall->coordinates,
+                'location_description' => $stall->location_description,
+                'is_table' => $stall->is_table,
+                'fee_masterlist_id' => $stall->stallsCategories->fee_masterlist_id ?? null,
+                'fee' => FeeMasterlist::find($stall->stallsCategories->fee_masterlist_id ),
+                'status' => $stall->status,
                 'categories' => $stall->stallsCategories
             ]
         ]);
@@ -145,6 +157,6 @@ class StallsListController extends Controller
 
     public function statusUpdate(Request $request, Stall $stall)
     {
-        $stall->update(['status' => $request->status]);
+        return $stall->update(['status' => $request->status]);
     }
 }

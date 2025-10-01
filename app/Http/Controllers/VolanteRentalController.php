@@ -24,7 +24,7 @@ use App\Http\Requests\VolanteRentalRequest;
 
 use App\Http\Controllers\PermitController;
 use App\Http\Controllers\RequirementController;
-use App\Http\Controllers\PaymentsController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ApprovalPermitController;
 use App\Models\StallsCategories;
 
@@ -43,7 +43,7 @@ class VolanteRentalController extends Controller
             'filters' => $request->all('search', 'category'),
             'volanteRentals' => $this->getIndexData($request),
             'user' => $user,
-            'stallsCategories' => StallsCategories::whereIn('id', [9, 10, 11])->get(),
+            'stallsCategories' => StallsCategories::whereIn('id', [4, 5, 6])->get(),
         ];
         return Inertia::render($user->role_id === 3 ? 'Users/Applications/VolanteRental'
         : 'Admin/Applications/VolanteRental', $data);
@@ -79,38 +79,15 @@ class VolanteRentalController extends Controller
         ));
     }
 
-    public function fieldValidator(VolanteRentalRequest $request)
-    {
-        
-        return Inertia::render('Users/Applications/Volante/Form',collect($this->getCreatePayload())
-            ->merge(['paymentDetails' => $paymentDetails])
-            ->toArray());
-    }
-
     public function store(VolanteRentalRequest $request)
     {
         $payload = $request->validated();
-
+        $total_payments = 0;
         // Step 1 → calculate payment
         if (isset($payload['step']) && $payload['step'] == 1) {
-            $stall = Stall::with('stallsCategories')->findOrFail((int) $payload['stall_id']);
-            $feeMasterlist = FeeMasterlist::whereIn(
-                'id',
-                json_decode($stall->stallsCategories->fee_masterlist_ids, true)
-            )->get();
-
-            $paymentDetails = $this->calculateVolantePaymentFromFees(
-                $payload['started_date'],
-                $payload['end_date'],
-                $payload['duration'] ?? 0,
-                $payload['quantity'] ?? 0,
-                $feeMasterlist->toArray()
-            );
-
-            // Merge into existing props (no redirect)
-            return Inertia::render('Users/Applications/Volante/Form', collect($this->getCreatePayload())
+            return Inertia::render('Users/Applications/Volante/Form', collect($this->getCreatePayload()
             ->merge(['paymentDetails' => $paymentDetails])
-            ->toArray())->withViewData(['step' => 1]);
+            ->toArray())->withViewData(['step' => 1]));
         }
 
         // Step 2 → just return current props, no changes
@@ -121,6 +98,25 @@ class VolanteRentalController extends Controller
 
         // Step 3 → final save
         if (isset($payload['step']) && $payload['step'] == 3) {
+            $stall = Stall::with('stallsCategories')->findOrFail((int) $payload['stall_id']);
+            list($fees_additional) = $this->prepareFees($request, $stall);
+
+            $total_payments = $this->calculateVolantePaymentFromFees(
+                (int) $request->bulb,
+                $stall,
+                $fees_additional
+            );
+
+
+            $payloadRequest = $payload;
+            $payloadRequest['total_payment'] = $total_payments->total;
+            $payloadRequest['fees_additional'] = json_encode($request->fees ?? []);
+
+
+            Log::info('Final payload for stall rental creation', [
+                'payload' => $payloadRequest,
+            ]);
+
             $this->addData($payload);
 
             return redirect()
@@ -128,10 +124,8 @@ class VolanteRentalController extends Controller
                 ->with('success', 'Volante rental application created successfully.');
         }
 
-        // Default fallback
         return back()->withErrors(['step' => 'Invalid step provided.']);
     }
-
 
     public function create(): Response
     {
@@ -196,9 +190,69 @@ class VolanteRentalController extends Controller
     }
 
     public function storeApi(VolanteRentalRequest $request)
-    {  
-        $volanteRental = $this->addData($request->validated());
-        return response()->json(['data' => $volanteRental ]);
+     {  
+        $payload = $request->validated();
+        $total_payments = 0;
+        // Step 1 → calculate payment
+        if (isset($payload['step']) && $payload['step'] == 1) {
+            $stall = Stall::with('stallsCategories')->findOrFail((int) $payload['stall_id']);
+            list($fees_additional) = $this->prepareFees($request, $stall);
+            $total_payments = $this->calculateVolantePaymentFromFees(
+                (int) $request->bulb,
+                $stall,
+                $fees_additional
+            );
+            return response()->json([
+                'step' => 1,
+                'data' => $this->getCreatePayload(),
+                'stall' => $stall,
+                'total_payments' => $total_payments->total,
+            ]);
+        }
+
+        // Step 2 → just return current props, no changes
+        if (isset($payload['step']) && $payload['step'] == 2) {
+            return response()->json([
+                'step' => 2,
+            ]);
+        }
+
+        // Step 3 → final save
+        if (isset($payload['step']) && $payload['step'] == 3) {
+            $stall = Stall::with('stallsCategories')->findOrFail((int) $payload['stall_id']);
+            list($fees_additional) = $this->prepareFees($request, $stall);
+
+            $total_payments = $this->calculateVolantePaymentFromFees(
+                (int) $request->bulb,
+                $stall,
+                $fees_additional
+            );
+
+
+            $payloadRequest = $payload;
+            $payloadRequest['total_payment'] = $total_payments->total;
+            $payloadRequest['fees_additional'] = json_encode($request->fees ?? []);
+
+            // $payloadRequest = (object) $payloadRequest;
+
+            Log::info('Final payload for stall rental creation', [
+                'payload' => $payloadRequest,
+            ]);
+
+            $this->addData($payloadRequest);
+
+            return response()->json([
+                'step'    => 3,
+                'message' => 'Stall rental application created successfully.',
+                'data'    => $payloadRequest,
+            ]);
+        }
+
+
+        return response()->json([
+            'step' => null,
+            'message' => 'Invalid step provided.',
+        ], 400);
     }
 
     public function updateApi(VolanteRentalRequest $request, Volante $volanteRental)
@@ -264,7 +318,6 @@ class VolanteRentalController extends Controller
         $permit = (object)$volanteRental['permits'];
 
         $currentDeptId = $permit->department_id; // Approver's department
-        // PMO->MTO->PMO
         $approvalPermitController = new ApprovalPermitController();
         $approvalPermitController->storeApproval(
             $permit->id, 
@@ -274,42 +327,26 @@ class VolanteRentalController extends Controller
         );
         $permitController = new PermitController();
 
-        // STEP 1: Initial → Send to MTO
+        // STEP 1: Initial → SMPO
         if ($permit->is_initial) {
-            $permitController->update([
-                'department_id' => 2,
-                'assign_to' => 2,
+             $permitController->update([
+                'department_id' => 3, // Office of the Mayor
+                'assign_to' => 2, // assign to approver
                 'is_initial' => false
             ], $permit->id);
            
-            return response()->json(['message' => 'Initial approval done. Sent to MTO.']);
+            return response()->json(['message' => 'Office of Public Market Initial approval done. Sent to Office of the Mayor.']);
         }
 
-        // STEP 2: MTO → Send to Market
-        if ($currentDeptId === 2 && $permit->status == 0) {
+        // STEP 3: Office of the Mayor >   Market → Final Approval
+        if (!$permit->is_initial && $currentDeptId === 3 && $permit->status == 0) {
              $permitController->update([
-                'department_id' => 12,
+                'department_id' => 2, // Office of the Public Market
             ], $permit->id);
-
-            return response()->json(['message' => 'MTO approved. Sent to Office of the Mayor.']);
-        }
-
-        // STEP 3: Office of the Mayor → Send to Market
-        if ($currentDeptId === 12 && $permit->status == 0) {
-             $permitController->update([
-                'department_id' => 10,
-            ], $permit->id);
-
-            return response()->json(['message' => 'Office of the Mayor approved. Sent to Public Market.']);
-        }
-
-        // STEP 4: Market → Final Approval
-        if ($currentDeptId == 10 && $permit->status == 0) {
             
             $requiredDepartments = [
-                2,
-                10,
-                12,
+                2, // Public Market
+                3, // OFFICE OF THE MUNICIPAL MAYOR
             ];
 
             $approvedDepartments = ApprovalPermit::where('permit_id', $permit->id)
@@ -326,7 +363,8 @@ class VolanteRentalController extends Controller
             // Finalize approval
             $this->permitController->update([
                 'status'        => 1, // Approved
-                'issued_date'   => now()->format('Y-m-d'),
+                'issued_date'   => Carbon::now()->format('Y-m-d'),
+                'expiry_date'   => Carbon::now()->copy()->addYears(3)->toDateString(),
                 'assign_to'     => 1,
                 'permit_number' => $permit->generatePermitNumber(10),
                 'department_id' => null
@@ -335,12 +373,14 @@ class VolanteRentalController extends Controller
             $this->updateData($volanteRental, ['status' => 1]);
 
             $stallController = new StallsListController();
-            // Update stall status to 'assigned' (3)
+            // Update stall status to 'assigned' (1)
             $stallController->statusUpdate(
                 new Request(['status' => 1]),
                 Stall::findOrFail((int) $volanteRental->stall_id)
             );
         }
+        // Send SMS or Email notification to user about approval
+        // Notification::send($stallRental->user, new StallRentalApproved($stallRental));
         return [
             'message' => 'Volante rental approved successfully.',
             'volanteRental' => $volanteRental,
@@ -349,58 +389,79 @@ class VolanteRentalController extends Controller
 
     }
 
-    private function calculateVolantePaymentFromFees(
-    string $startDate,
-    string $endDate,
-    int $quantity,
-    int $durationType, // 1 = daily, 2 = weekly, 3 = event
-    array $fees
-    ) {
-        $days = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
-        $weeks = ceil($days / 7);
+    private function prepareFees($request, $stall): array
+    {
 
-        $total = 0;
-        $feeBreakdown = [];
-
-        foreach ($fees as $index => $fee) {
-            $amount = (float)$fee['amount'];
-            $feeAmount = 0;
-
-            if ($durationType === 3) { // event - one time fee * quantity
-                // If fee is daily/weekly it doesn't matter, event is one time
-                $feeAmount = $amount * $quantity;
-            } else {
-                // daily or weekly duration type calculations
-                if (!empty($fee['is_styro']) && !empty($fee['is_daily'])) {
-                    $multiplier = $durationType === 2 ? 7 * $weeks : $days;
-                    $feeAmount = $amount * $quantity * $multiplier;
-
-                } elseif (!empty($fee['is_per_kilo']) && !empty($fee['is_daily'])) {
-                    $multiplier = $durationType === 2 ? 7 * $weeks : $days;
-                    $feeAmount = $amount * $quantity * $multiplier;
-
-                } elseif (!empty($fee['is_daily'])) {
-                    $multiplier = $durationType === 2 ? 7 * $weeks : $days;
-                    $feeAmount = $amount * $quantity * $multiplier;
-
-                } else {
-                    // One-time or other fee (no multiplication by duration or quantity)
-                    $feeAmount = $amount;
-                }
-            }
-
-            $feeBreakdown[] = [
-                'type' => $fee['type'],
-                'amount' => $feeAmount,
-            ];
-
-            $total += $feeAmount;
+        // Merge request fees with bulb fee if needed
+        $feesIds = $request->fees_additional ? json_decode($request->fees_additional , true) : $request->fees ?? [];
+        if (!is_array($feesIds)) {
+            $feesIds = json_decode($feesIds, true) ?? [];
         }
 
-        return [
-            'days' => $days,
-            'weeks' => $weeks,
-            'breakdown' => $feeBreakdown,
+        if ((int) $request->bulb > 0) {
+            $feesIds = array_merge($feesIds, [3]); // id 3 is Bulbs
+        }
+
+        // Fetch all fees from DB
+        $fees = FeeMasterlist::whereIn('id', $feesIds)->get()->map(function ($f) {
+            return [
+                'id'     => $f->id,
+                'type'   => $f->type,
+                'amount' => $f->amount,
+            ];
+        })->toArray();
+
+        return [ $fees];
+    }
+
+    private function calculateVolantePaymentFromFees(
+        int $bulb,
+        Stall $stall,
+        array $fees,
+        ?bool $isNotPaid = null, // make it optional
+    ) {
+        $total = 0;
+        $breakdown = [];
+
+        // Ensure fees is always an array
+        if (is_string($fees)) {
+            $fees = json_decode($fees, true);
+        }
+
+        // Add fixed fees except bulbs
+        foreach ($fees as $fee) {
+            $type = $fee['type'];
+            $amount = $fee['amount'];
+
+            if ($type !== 'Bulbs') {
+                $breakdown[] = (object) ['type' => $type, 'amount' => $amount];
+                $total += $amount;
+            }
+        }
+
+        // Add bulb charges
+        
+        foreach ($fees as $fee) {
+            $type = $fee['type'];
+            $amount = $fee['amount'];
+
+            if ($type === 'Bulbs' && $bulb > 0) {
+                $bulbFee = $bulb * $amount;
+                $breakdown[] = (object) ['type' => "Bulbs ({$bulb} pcs)", 'amount' => $bulbFee];
+                $total += $bulbFee;
+            }
+        }
+
+        // Apply surcharge if unpaid
+        if ($isNotPaid) {
+            $surcharge = $total * 0.12;
+            $breakdown[] = (object) ['type' => '12% Surcharge (Unpaid)', 'amount' => $surcharge];
+            $total += $surcharge;
+        }
+
+        return (object) [
+            'stall' => $stall,
+            'breakdown' => $breakdown,
             'total' => $total,
         ];
     }
@@ -415,36 +476,49 @@ class VolanteRentalController extends Controller
         }
 
         if ($user && $user->role_id === 2) {
-            $query->forApproval($user->department_id);
+            $query->myApplicationUnderMyDep($user->department_id);
         }
 
         return $query->paginate(10)
-            ->through(function ($data) use ($user) {
-                $stall = $data->stalls;
+            ->through(function ($volanteRental) use ($user) {
+                $stall = $volanteRental->stalls;
                 $stallCategory = $stall ? $stall->stallsCategories : null;
-                $permits = $data->permits;
-                $feeMasterlist = $stallCategory ? FeeMasterlist::whereIn(
-                    'id',
-                    json_decode($stallCategory->fee_masterlist_ids, true)
-                )->get() : collect();
+                $permits = $volanteRental->permits;
 
-                $paymentDetails = $this->calculateVolantePaymentFromFees(
-                    $data->started_date,
-                    $data->end_date,
-                    $data->quantity,
-                    $data->duration,
-                    $feeMasterlist->toArray()
+                // penalty check
+                $startDate = $volanteRental->started_date; 
+
+                $isCurrentQuarterPaid = false;
+
+                if ($startDate && !$startDate->isSameMonth(now())) {
+                    $isCurrentQuarterPaid = $volanteRental->payments()
+                        ->inCurrentQuarter()
+                        ->where('volantes_id', $volanteRental->id)
+                        ->exists();
+                }
+                        
+                // fees
+                list($fees_additional) = $this->prepareFees($volanteRental, $stall);
+
+                $total_payments = $this->calculateVolantePaymentFromFees(
+                    (int) $volanteRental->bulb,
+                    $stall,
+                    $fees_additional
                 );
 
+               $currentPayment = $volanteRental->payments()
+                    ->withVolanteRental()
+                    ->thisMonth()
+                    ->get();
+
                 return [
-                    'id' => $data->id,
-                    'name' => $data->business_name,
-                    'location' => $data->location,
-                    'duration' => $data->duration,
-                    'status' => $data->status,
-                    'area_of_sqr_meter' => $data->area_of_sqr_meter,
-                    'start_date' => Carbon::parse($data->started_date),
-                    'end_date' => Carbon::parse($data->end_date),
+                    'vendor' => $volanteRental->user,
+                    'id' => $volanteRental->id,
+                    'name' => $volanteRental->business_name,
+                    'status' => $volanteRental->status,
+                    'start_date' => $volanteRental->started_date ? Carbon::parse($volanteRental->started_date) : null,
+                    'end_date' => $volanteRental->started_date ? Carbon::parse($volanteRental->end_date) : null,
+                    'acknowledgeContract' => $volanteRental->acknowledgeContract,
                     'stalls' => $stall ? [
                         'id' => $stall->id,
                         'name' => $stall->name,
@@ -457,34 +531,53 @@ class VolanteRentalController extends Controller
                             'name' => $stallCategory->name,
                             'description' => $stallCategory->description,
                             'is_transient' => $stallCategory->is_transient,
-                            'fee_masterlist_ids' => $stallCategory->fee_masterlist_ids,
-                            'fee' => FeeMasterlist::whereIn(
+                            'fee_masterlist_ids' => $stallCategory->fee_masterlist_id,
+                            'fee' => FeeMasterlist::where(            
                                 'id',
-                                json_decode($stallCategory->fee_masterlist_ids, true)
+                            $stallCategory->fee_masterlist_id
                             )->get(),
                         ] : null,
                     ] : null,
                     'permits' => $permits ? [
                         'id' => $permits->id,
+                        'type' => $permits->type === 1 ? 'New' : 'Renewal',
                         'permit_number' => $permits->permit_number,
-                         'type' => $permits->type === 1 ? 'New' : 'Renewal',
+                        'department_id' => $permits->department_id,
                         'status' => $permits->status,
+                        'remarks' => $permits->remarks,
+                        'assign_to' => $permits->assign_to,
+                        'is_initial' => $permits->is_initial,
                         'created_at' => $permits->created_at ? Carbon::parse($permits->created_at) : null,
                         'issued_date' => $permits->issued_date ? Carbon::parse($permits->issued_date) : null,
-                        'valid_until' => $permits->valid_until ? Carbon::parse($permits->valid_until) : null,
+                        'expiry_date' => $permits->expiry_date ? Carbon::parse($permits->expiry_date) : null
                     ] : null,
-                    'requirements' => $permits ? $permits->requirements->map(function ($requirement) {
+                     'requirements' => $permits ? $permits->requirements->map(function ($requirement) {
                         return [
                             'id' => $requirement->id,
-                            'name' => $requirement->requirementDetails->name,
                             'attachment' => $requirement->attachment,
+                            'name' => $requirement->requirementDetails->name,
                             'checklist_id' => $requirement->requirement_checklist_id,
                             'url' => asset('storage/uploads' . $requirement->path),
                         ];
                     }) : collect(),
-                    'payments' => $paymentDetails,
-                    'paymentRecord' => $data->payments,
-                    'user' => $data->user,
+                    'quarterly_payment' => $total_payments->total,
+                    'next_payment_due' => $this->nextStartDate(),
+                    'penalty' => $isCurrentQuarterPaid ? ($total_payments->total * 0.12) : 0,
+                    'currentPayment' => $currentPayment,
+                    'current_payment' => count($currentPayment) > 0 ? 'Paid' : 'Not Paid',
+                    'approvals' => $permits->approvals ? $permits->approvals->map(function ($approval) {
+                        return [
+                            'id' => $approval->id,
+                            'approver' => $approval->approver ? [
+                                'id' => $approval->approver->id,
+                                'name' => $approval->approver->first_name . ' ' . $approval->approver->last_name,
+                                'email' => $approval->approver->email,
+                            ] : null,
+                            'department' => $approval->department->name,
+                            'status' => $approval->status,
+                            'created_at' => $approval->created_at ? Carbon::parse($approval->created_at) : null,
+                        ];
+                    }) : collect(),
                 ];
             })
             ->withQueryString();
@@ -504,12 +597,35 @@ class VolanteRentalController extends Controller
         $stall = $volanteRental->stalls;
         $stallCategory = $stall ? $stall->stallsCategories : null;
         $permits = $volanteRental->permits;
-        $feeMasterlist = $stallCategory ? FeeMasterlist::whereIn(
-            'id',
-            json_decode($stallCategory->fee_masterlist_ids, true)
-        )->get() : collect();
 
+        // penalty check
+        $startDate = $volanteRental->started_date; 
+
+        $isCurrentQuarterPaid = false;
+
+        if ($startDate && !$startDate->isSameMonth(now())) {
+            $isCurrentQuarterPaid = $volanteRental->payments()
+                ->inCurrentQuarter()
+                ->where('volantes_id', $volanteRental->id)
+                ->exists();
+        }
+
+        // fees
+        list($fees_additional) = $this->prepareFees($volanteRental, $stall);
+
+        $total_payments = $this->calculateVolantePaymentFromFees(
+            (int) $volanteRental->bulb,
+            $stall,
+            $fees_additional,
+            $isCurrentQuarterPaid
+        );
+
+        $currentPayment = $volanteRental->payments()
+            ->withVolanteRental()
+            ->thisMonth()
+            ->get();
         return [
+            'vendor' => $volanteRental->user,
             'id' => $volanteRental->id,
             'name' => $volanteRental->business_name,
             'location' => $volanteRental->location,
@@ -517,8 +633,8 @@ class VolanteRentalController extends Controller
             'quantity' => $volanteRental->quantity,
             'status' => $volanteRental->status,
             'area_of_sqr_meter' => $volanteRental->area_of_sqr_meter,
-            'start_date' => Carbon::parse($volanteRental->started_date),
-            'end_date' => Carbon::parse($volanteRental->end_date),
+            'start_date' => $volanteRental->started_date ? Carbon::parse($volanteRental->started_date) : null,
+            'end_date' => $volanteRental->end_date ? Carbon::parse($volanteRental->end_date) : null,
             'stalls' => $stall ? [
                 'id' => $stall->id,
                 'name' => $stall->name,
@@ -531,10 +647,10 @@ class VolanteRentalController extends Controller
                     'name' => $stallCategory->name,
                     'description' => $stallCategory->description,
                     'is_transient' => $stallCategory->is_transient,
-                    'fee_masterlist_ids' => $stallCategory->fee_masterlist_ids,
-                    'fee' => FeeMasterlist::whereIn(            
+                    'fee_masterlist_ids' => $stallCategory->fee_masterlist_id,
+                    'fee' => FeeMasterlist::where(            
                         'id',
-                        json_decode($stallCategory->fee_masterlist_ids, true)
+                       $stallCategory->fee_masterlist_id
                     )->get(),
                 ] : null,
             ] : null,
@@ -548,7 +664,7 @@ class VolanteRentalController extends Controller
                 'assign_to' => $permits->assign_to,
                 'is_initial' => $permits->is_initial,
                 'issued_date' => $permits->issued_date ? Carbon::parse($permits->issued_date) : null,
-                'valid_until' => $permits->valid_until ? Carbon::parse($permits->valid_until) : null,
+                'expiry_date' => $permits->expiry_date ? Carbon::parse($permits->expiry_date) : null
             ] : null,
             'requirements' => $permits ? $permits->requirements->map(function ($requirement) {
                 return [
@@ -558,24 +674,39 @@ class VolanteRentalController extends Controller
                     'url' => asset('storage/uploads' . $requirement->path),
                 ];
             }) : collect(),
-            'payments' => $this->calculateVolantePaymentFromFees(
-                $volanteRental->started_date,
-                $volanteRental->end_date,
-                $volanteRental->quantity,
-                $volanteRental->duration,
-                $feeMasterlist->toArray()
-            ),
-            'paymentRecord' => $volanteRental->payments,
-            'user' => $volanteRental->user,
+            'quarterly_payment' => $total_payments->total,
+            'next_payment_due' => $this->nextStartDate(),
+            'penalty' => $isCurrentQuarterPaid ? ($total_payments->total * 0.12) : 0,
+            'currentPayment' => $currentPayment,
+            'current_payment' => count($currentPayment) > 0 ? 'Paid' : 'Not Paid',
+            'approvals' => $permits->approvals ? $permits->approvals->map(function ($approval) {
+                return [
+                    'id' => $approval->id,
+                    'approver' => $approval->approver ? [
+                        'id' => $approval->approver->id,
+                        'name' => $approval->approver->first_name . ' ' . $approval->approver->last_name,
+                        'email' => $approval->approver->email,
+                        'position' => $approval->approver->departmentPositions ? $approval->approver->departmentPositions->name : null
+                    ] : null,
+                    'department' => $approval->department->name,
+                    'status' => $approval->status,
+                    'created_at' => $approval->created_at ? Carbon::parse($approval->created_at) : null,
+                ];
+            }) : collect(),
         ];  
+    }
+
+    private function nextStartDate() {
+        $nextMonth20 = Carbon::now()->addMonth()->day(20);
+
+        return $nextMonth20->toDateString();
     }
 
     private function addData(array $payload)
     {
-        $user = Auth::user();
-
+        $user = User::find(5); //Auth::user();
         $requirementController = new RequirementController();
-        $paymentController = new PaymentsController();
+        $paymentController = new PaymentController();
         $stallController = new StallsListController();
         $permitController = new PermitController();
 
@@ -587,65 +718,32 @@ class VolanteRentalController extends Controller
                     'name' => $data->name,
                     'size' => $data->size,
                     'status' => $data->status,
-                    'area_of_sqr_meter' => $data->area_of_sqr_meter,
+                    'coordinates' => $data->coordinates,
                     'stall_category_id' => $data->stall_category_id,
-                    'stallsCategories' => $data->stallsCategories ? [
-                        'id' => $data->stallsCategories->id,
-                        'name' => $data->stallsCategories->name,
-                        'description' => $data->stallsCategories->description,
-                        'is_transient' => $data->stallsCategories->is_transient,
-                        'fee_masterlist_ids' => $data->stallsCategories->fee_masterlist_ids,
-                        'fee' => FeeMasterlist::whereIn(
-                            'id', // column name
-                            json_decode($data->stallsCategories->fee_masterlist_ids, true) // array of IDs
-                        )->get(),
-                        'total_payment' => collect(json_decode(FeeMasterlist::whereIn('id', json_decode($data->stallsCategories->fee_masterlist_ids, true))->get(), true))    
-                        ->sum(function ($f) {
-                            return is_array($f) && isset($f['amount']) 
-                                ? floatval($f['amount']) 
-                                : 0.0;
-                        }),
-                    ] : null,
+                    'stallsCategories' => $data->stallsCategories,
                 ];
             })->first();
-        $payload['assign_to'] = 10;
+        $payload['assign_to'] = 2;
         $payload['department_id'] = 10;
         $permitDetails = $permitController->addBusinessPermit($payload);
-    
+            
+        $file = isset($payload['attachment_signature']) ? $payload['attachment_signature'] : null;
+        $uuidName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('uploads', $uuidName . 'attachment_signature' . $payload['business_name'], 'public');
         $payload['user_id'] = $user->id;
         $payload['permit_id'] = $permitDetails->id;
+        $payload['attachment_signature'] = 'attachment_signature-'.$payload['business_name'].'-'.$uuidName;
 
         $volanteRental = Volante::create($payload);
         $requirements = $requirementController->addRequirements(array_map(function ($item) use ($permitDetails) {
             $item['permit_id'] = $permitDetails->id;
             return $item;
         }, $payload['requirements']));
-        
-        $amountFee = $stall['stallsCategories']['fee']->toArray();
-        $paymentDetails = $this->calculateVolantePaymentFromFees(
-                $payload['started_date'],
-                $payload['end_date'],
-                $payload['duration'],
-                isset($payload['quantity']) ? $payload['quantity'] : 0,
-                $amountFee
-        );
-        Log::info('VolanteRental payload:', [
-            'payload' => $payload,
-            'paymentDetails' => $paymentDetails
-        ]);
-        $file = isset($payload['receipt']) ? $payload['receipt'] : null;
-        $uuidName = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('uploads', $uuidName, 'public');
-        $payments = $paymentController->addBusinessPermit([
-            'user_id' => $volanteRental->user_id, // Assuming user ID is 2 for the example
-            'volantes_id' => $volanteRental->id,
-            'receipt' => $uuidName,
-            'date' => Carbon::now()->format('Y-m-d'),
-            'amount' => isset($payload['amount']) ? $payload['amount'] : 0,
-            'reference_number' => isset($payload['reference_number']) ? $payload['reference_number'] : null,
-            'status' => isset($payload['receipt']) ? 1 : 2, // 1 - Paid, 2 - Pending, 3 - Failed
-        ]);
 
+        
+        $amountFee = $payload['total_payment'] ?? 0;
+
+        // Update stall to Reserved
         $stallController->statusUpdate(
             new Request(['status' => 3]),
             Stall::findOrFail((int) $payload['stall_id'])
@@ -655,8 +753,6 @@ class VolanteRentalController extends Controller
             'volanteRental' => $volanteRental,
             'permitDetails' => $permitDetails,
             'requirements' => $requirements,
-            'paymentDetails' => $paymentDetails,
-            'payments' => $payments,
         ];
     }
 

@@ -21,12 +21,11 @@
                 </select>
             </search-filter>
                 <Link type="submit" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
-                :href="`/admin/users/create?role=${props?.filters?.role}`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors" v-if=" props?.filters?.role !== 'user'">{{props?.filters?.role === 'inspector' ? 'Add Inspector' : 'Add Admin'}}</Link>
+                :href="`/admin/users/create?role=${props?.filters?.role}`" class="bg-btn-gradient text-white font-bold uppercase px-5 py-2 rounded focus:outline-none shadow hover:bg-primary-700 transition-colors" v-if=" props?.filters?.role !== 'vendor'">{{props?.filters?.role === 'inspector' ? 'Add Inspector' : 'Add Admin'}}</Link>
             </div>
             <BaseTable :headers="headers" :data="users?.data">
                 <!-- Optional: Customize header -->
                 <template #header>
-                    <th class="px-4 py-3 text-left">User ID</th>
                     <th class="px-4 py-3 text-left">Name</th>
                     <th class="px-4 py-3 text-left">Email</th>
                     <th class="px-4 py-3 text-left">Mobile</th>
@@ -39,7 +38,6 @@
                 <!-- Optional: Customize rows -->
                 <template #row="{ data }">
                     <tr v-for="(user, i) in data" :key="user.id" class="hover:bg-gray-50" >
-                        <td class="px-4 py-3">{{ user.id }}</td>
                         <td class="px-4 py-3 capitalize">{{ user.name }}</td>
                         <td class="px-4 py-3">{{ user.email }}</td>
                         <td class="px-4 py-3 capitalize">{{ user.mobile }}</td>
@@ -108,7 +106,6 @@ import FlashMessage from '@/Shared/FlashMessage.vue';
 const verificationLinkSent = ref(null);
 
 const headers = [
-    'ID',
     'Name',
     'Email',
     'Mobile',
@@ -153,13 +150,13 @@ function getPageName(){
 
     switch (props?.filters?.role?.toLowerCase()) {
         case 'sub-admin':
-            pageName = 'Department Admins'
+            pageName = 'Admins'
             break;
         case 'inspector':
             pageName = 'Inspectors'
         break;  
         default:
-            pageName = 'All Users'
+            pageName = 'Vendors'
             break;
     }
     return pageName;

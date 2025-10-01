@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('user_type_id')->nullable();
             $table->foreignId('sub_admin_type_id')->nullable();
             $table->foreignId('department_id')->nullable();
+            $table->foreignId('department_position_id')->nullable();
             $table->string('first_name');
             $table->string('middle_name')->nullable();
             $table->string('last_name');

@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('stalls_categories', function (Blueprint $table) {
             $table->id();
-            $table->json('fee_masterlist_ids')->nullable(); 
             $table->string('name')->unique();
             $table->text('description');
             $table->boolean('is_transient')->default(false);
+            $table->boolean('is_table_rental')->default(false);
+            $table->integer('fee_masterlist_id')->nullable();
             $table->timestamps();
         });
     }  

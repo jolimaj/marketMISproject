@@ -12,18 +12,18 @@ class Volante extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'location',
-        'duration',
-        'status',
-        'area_of_sqr_meter',
-        'stall_id',
         'user_id',
+        'stall_id',
         'permit_id',
         'business_name',
         'started_date',
-        'end_date', 
-        'stall_id',
-        'quantity',     
+        'end_date',
+        'status',
+        'acknowledgeContract',
+        'attachment_signature',
+        'bulb',
+        'fees_additional',
+        'total_payment',   
     ];
 
     public function stalls(): BelongsTo
@@ -75,7 +75,7 @@ class Volante extends Model
     public function scopeForApproval($query, $id)
     {
         return $query->whereHas('permits', function ($q) use ($id) {
-                $q->where('assign_to',  $id);
+                $q->where('assign_to', $id);
             });
     }
 

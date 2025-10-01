@@ -14,6 +14,7 @@ class StallsCategories extends Model
         'description',
         'monthly_fee',
         'daily_fee',
+        'fee_masterlist_id',
     ];
 
     protected $casts = [
