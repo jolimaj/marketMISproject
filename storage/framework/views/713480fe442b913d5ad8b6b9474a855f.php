@@ -5,4 +5,4 @@
     <?php echo e($slot); ?>
 
 </section>
-<?php /**PATH /home/jolems/project/2025/marketMISproject/vendor/laravel/framework/src/Illuminate/Foundation/Providers/../resources/exceptions/renderer/components/card.blade.php ENDPATH**/ ?>
+<?php /**PATH /home/jolems/project/2025/marketMISproject/vendor/laravel/framework/src/Illuminate/Foundation/resources/exceptions/renderer/components/card.blade.php ENDPATH**/ ?>
