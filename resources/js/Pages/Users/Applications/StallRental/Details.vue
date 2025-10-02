@@ -149,7 +149,7 @@
             <div class="flex justify-end gap-2">
                 <button @click="goToEdit(stallRental.id)" class="p-2 rounded-lg h bg-blue-600 text-white over:bg-blue-700" 
                 :disabled="stallRental?.permits?.status > 0">
-                    Edit Permit
+                    Edit
                 </button>
                 <button @click="goToReupload(stallRental.id)" class="p-2 rounded-lg hover:bg-red-200" 
                 :class="stallRental?.permits?.status === 2 ? 'bg-red-600 text-white' : 'bg-red-200 text-white'" :disabled="stallRental?.permits?.status !== 2">
