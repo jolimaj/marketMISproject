@@ -33,16 +33,5 @@ return [
         'isStallType' => 3,
         'isVolanteType' => 3,
         'isRequired' => true,
-    ],
-    [
-        'name' => 'Notarized Lease Agreement (for rented stalls/tables)',
-        'description' => 'A document issued by the market administration certifying that the stall or table holder has complied with market rules, regulations, and payments.',
-        'isTable' => true,
-        'isStall' => true,
-        'isVolante' => false,
-        'isTableType' => 2,
-        'isStallType' => 2,
-        'isVolanteType' => 2,
-        'isRequired' => true,
-    ],
+    ]
 ];
