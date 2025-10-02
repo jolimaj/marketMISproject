@@ -36,7 +36,7 @@ class UserRequest extends FormRequest
             'last_name' => 'required|string|max:255',
             'role_id' => 'required|integer',
             'gender_id' => 'required|integer',
-            'sub_admin_type_id' => 'integer',
+            'sub_admin_type_id' => 'nullable|integer',
             'department_id' => 'nullable|integer',
             'department_position_id' => 'nullable|integer',
             'address' => 'required|string|max:255',
