@@ -619,7 +619,7 @@ class StallRentalController extends Controller
     }
 
     private function getSingleData(StallRental $stallRental) {
-        $user = User::find(5); //Auth::user();
+        $user = Auth::user(); //Auth::user();
         $stall = $stallRental->stalls;
 
         if ($user->role_id === 2 && $stall && $stallRental->permits && $stallRental->permits->department_id !== $user->department_id) {

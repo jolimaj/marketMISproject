@@ -704,7 +704,7 @@ class VolanteRentalController extends Controller
 
     private function addData(array $payload)
     {
-        $user = User::find(5); //Auth::user();
+        $user = Auth::user(); //Auth::user();
         $requirementController = new RequirementController();
         $paymentController = new PaymentController();
         $stallController = new StallsListController();

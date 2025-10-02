@@ -255,7 +255,7 @@ class TablesController extends Controller
     // private functions
     private function addData(array $payload)
     {
-        $user = User::find(5); //Auth::user();
+        $user = Auth::user(); //Auth::user();
         
         $requirementController = new RequirementController();
         $paymentController = new PaymentController();
