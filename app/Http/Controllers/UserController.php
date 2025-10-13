@@ -48,6 +48,7 @@ class UserController extends Controller
                     'address' => $user->address,
                     'birthDay' => Carbon::parse($user->birthDay),
                     'status' => $user->status,
+                    'email_verified_at' => $user->email_verified_at,
                     'gender_id' => $user->gender_id,
                     'roles' => $user->role,
                     'genders' => $user->gender,
@@ -102,8 +103,8 @@ class UserController extends Controller
                     'email' => $user->email,
                     'mobile' => $user->mobile,
                     'address' => $user->address,
-                    'birthDay' => Carbon::parse($user->birthDay),
-                    'status' => $user->status,
+                    'birthDay' => Carbon::parse($user->birthday),
+                    'status' => $user->email_verified_at,
                     'gender_id' => $user->gender_id,
                     'roles' => $user->role,
                     'genders' => $user->gender,
@@ -200,12 +201,12 @@ class UserController extends Controller
 
     public function store(UserRequest $request): RedirectResponse
     {
-        $user =  Auth::user();
-        User::create([
+        $user = User::create([
             'user_type_id' => $request['user_type_id'],
             'role_id' => $request['role_id'],
             'gender_id' => $request['gender_id'],
             'department_id' => $request['department_id'],
+            'department_position' => 3,
             'sub_admin_type_id' => $request['sub_admin_type_id'],
             'first_name' => $request['first_name'],
             'last_name' => $request['last_name'],
@@ -217,7 +218,7 @@ class UserController extends Controller
             'password' => static::$password ??= Hash::make('MarketISAdmin'),
         ]);
         $roleName = $this->handleRole($request['role_id'],$request['user_type_id']);
-        
+        $user->notify(new CustomVerifyEmail);
         return redirect()->route('admin.users.all', ['role' => $roleName])->with('success', 'User created successfully.');
     }
 

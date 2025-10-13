@@ -95,19 +95,19 @@ Route::post('/register', function (Request $request) {
     ]);
 });
 
-Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)
-    ->middleware(['signed'])
-    ->name('verification.verify');
+// Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)
+//     ->middleware(['signed'])
+//     ->name('verification.verify');
 
 
-Route::post('admin/users/email/verification-send', [UserController::class, 'emailSend'])->name('admin.users.email');
+// Route::post('admin/users/email/verification-send', [UserController::class, 'emailSend'])->name('admin.users.email');
 Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)
     ->middleware(['signed'])
     ->name('verification.verify');
 // Route::get('users', [UserController::class, 'apiIndex']);
 Route::get('users/user-type', [UserTypeController::class, 'apiIndex']);
 Route::get('users/sub-admin-type', [SubAdminTypeController::class, 'apiIndex']);
-Route::put('admin/users/email/verification3/{user}', [UserController::class, 'emailSend'])->name('admin.users.email');
+// Route::put('admin/users/email/verification3/{user}', [UserController::class, 'emailSend'])->name('admin.users.email');
 
 Route::get('/users/create', [UserController::class, 'apiCreate']);
 Route::put('/users/approve/{user}', [UserController::class, 'approverOrRejectedAPI']);

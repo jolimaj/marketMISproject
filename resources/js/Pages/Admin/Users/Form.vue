@@ -130,16 +130,17 @@
               <div class="flex flex-col md:flex-row gap-4 p-5">
                 <div class="w-full">
                 <InputLabel for="address" value="Address" />
-                <textarea
-                    id="address"
-                    v-model="form.address"
-                    type="text"
-                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                    required
-                    autocomplete="address"
-                />
-                <InputError class="mt-2" :message="form?.errors?.address" />
-              </div>
+                <SelectInput v-model="form.address" id="address" required class="w-full">
+                  <option
+                    v-for="stall in barangays.barangays"
+                    :key="stall.name"
+                    :value="stall.name"
+                  >
+                    {{ stall.name }}
+                  </option>
+                </SelectInput>
+                <InputError :message="form.errors.address" />
+                </div>
               </div>
               <div class="flex items-center px-8 py-4 bg-gray-50 border-t border-gray-100">
                 <Link :href="`/admin/users?role=${getRouteName()}`" class="text-red-600 hover:underline" tabindex="-1">Cancel</Link>
@@ -156,6 +157,7 @@
 import { defineProps } from 'vue';
 import { Link, usePage, useForm } from '@inertiajs/vue3';
 import { formatDateShort, isEditPage } from '@/data/helper';
+import barangays from '@/data/barangays.json';
 import AppLayout from '@/Layouts/AppLayout.vue'
 import TextInput from '@/Components/TextInput.vue'
 import LoadingButton from '@/Shared/LoadingButton.vue'

@@ -22,8 +22,10 @@ class VerifyEmailController extends Controller
      */
     public function __invoke(Request $request, $id, $hash)
     {
-        $user = User::findOrFail($id);
-
+        $user = User::find($id);
+        Log::info('Login attempt', [
+            'user' => $user
+        ]);
         // Check hash validity
         if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
             abort(403, 'Invalid verification link.');
@@ -39,7 +41,7 @@ class VerifyEmailController extends Controller
         Auth::login($user);
 
         // Redirect to your desired Inertia page
-        return redirect()->route('dashboard')->with('verified', true);
+        return redirect()->route('login')->with('verified', true);
     }
 
     /**

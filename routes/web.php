@@ -67,9 +67,9 @@ Route::post('/email/verification-notification/{user}', [VerifyEmailController::c
  * User View
  */
 Route::middleware(['auth', CheckUserRole::class . ':3'])->group(function () {
-    Route::get('dashboard', [UserController::class, 'index'])
-        ->name('dashboard')
-        ->middleware('auth');
+    // Route::get('dashboard', [UserController::class, 'index'])
+    //     ->name('dashboard')
+    //     ->middleware('auth');
     Route::get('my-rentals/stall-leasing', [StallRentalController::class, 'index'])->name('applications.stalls.index');
     Route::get('my-rentals/stall-leasing/{stallRental}/edit', [StallRentalController::class, 'edit'])->name('applications.stalls.edit');
     Route::get('my-rentals/stall-leasing/{stallRental}/reupload', [StallRentalController::class, 'edit'])->name('applications.stalls.reupload');
