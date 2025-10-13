@@ -18,6 +18,7 @@
 /storage/pail
 /storage/app/public/uploads
 /public/build/assets
+/vendor/
 Homestead.json
 Homestead.yaml
 Thumbs.db
