@@ -58,4 +58,13 @@ class UserRequest extends FormRequest
         ];
     }
 
+    public function messages()
+    {
+        return [
+            'password.min' => 'Password must be at least 8 characters long.',
+            'password.confirmed' => 'Password confirmation does not match.',
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+        ];
+    }
+
 }

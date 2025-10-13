@@ -102,4 +102,16 @@ class StallRental extends Model
             $q->where('department_id', $depID)->where('assign_to',  2);
         });
     }
+
+    public function scopeExpiringSoon($query)
+    {
+        $now = Carbon::today();
+        $fiveDays = Carbon::today()->addDays(5);
+
+        return $query->whereHas('permit', function ($q) use ($now, $fiveDays) {
+            $q->whereNotNull('issued_date')
+                ->whereNotNull('expiry_date')
+                ->whereBetween('expiry_date', [$now, $fiveDays]);
+        })->get();
+    }
 }

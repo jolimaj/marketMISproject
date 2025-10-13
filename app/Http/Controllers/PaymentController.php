@@ -25,10 +25,20 @@ class PaymentController extends Controller
         Log::info('User attempting payment', ['$request-' => $request]);
         $payload = $request->validated();
         $payload['user_id'] = $user->id;
-        $payload['stall_rental_id'] = (int) $payload['stall_rental_id'];
+        if(isset($payload['stall_rental_id'])) {
+            $payload['stall_rental_id'] = (int) $payload['stall_rental_id'] ?? null;
+        } 
+
+        if(isset($payload['table_rental_id'])) {
+            $payload['table_rental_id'] = (int) $payload['table_rental_id'] ?? null;
+        } 
+
+        if(isset($payload['volantes_id'])) {
+            $payload['volantes_id'] = (int) $payload['volantes_id'] ?? null;
+        }
         $this->addBusinessPermit($payload);
 
-        return redirect()->back()->with('success', 'Table rental application paid for this quarter.');
+        return redirect()->back()->with('success', 'Rental application paid.');
     }
 
     public function rentalPayment(PaymentRequest $request)

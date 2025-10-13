@@ -69,10 +69,10 @@ class InstallCommand extends Command implements PromptsForMissingInput
         // Storage...
         $this->callSilent('storage:link');
 
-        $this->replaceInFile('/home', '/dashboard', config_path('fortify.php'));
+        $this->replaceInFile('/home', '/login', config_path('fortify.php'));
 
         if (file_exists(resource_path('views/welcome.blade.php'))) {
-            $this->replaceInFile('/home', '/dashboard', resource_path('views/welcome.blade.php'));
+            $this->replaceInFile('/home', '/login', resource_path('views/welcome.blade.php'));
             $this->replaceInFile('Home', 'Dashboard', resource_path('views/welcome.blade.php'));
         }
 
@@ -237,7 +237,7 @@ class InstallCommand extends Command implements PromptsForMissingInput
         (new Filesystem)->copyDirectory(__DIR__.'/../../stubs/livewire/resources/views/profile', resource_path('views/profile'));
         (new Filesystem)->copyDirectory(__DIR__.'/../../stubs/livewire/resources/views/auth', resource_path('views/auth'));
 
-        if (! Str::contains(file_get_contents(base_path('routes/web.php')), "'/dashboard'")) {
+        if (! Str::contains(file_get_contents(base_path('routes/web.php')), "'/login'")) {
             (new Filesystem)->append(base_path('routes/web.php'), $this->livewireRouteDefinition());
         }
 
@@ -328,7 +328,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
+    Route::get('/login', function () {
         return view('dashboard');
     })->name('dashboard');
 });

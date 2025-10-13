@@ -181,7 +181,7 @@
         <div class="email-content">
             <div class="email-header">
                 <?php if(file_exists(public_path('images/market-MIS-logo.png'))): ?>
-                    <img src="<?php echo e(asset('images/market-MIS-logo.png')); ?>" alt="<?php echo e(config('app.name')); ?> Logo" class="logo">
+                    <img src="<?php echo new \Illuminate\Support\EncodedHtmlString(asset('images/market-MIS-logo.png')); ?>" alt="<?php echo new \Illuminate\Support\EncodedHtmlString(config('app.name')); ?> Logo" class="logo">
                 <?php endif; ?>
                 <h1>Verify Your Email Address</h1>
             </div>
@@ -196,14 +196,14 @@
                 </div>
                 
                 <div class="button-container">
-                    <a href="<?php echo e($url); ?>" class="reset-button">
+                    <a href="<?php echo new \Illuminate\Support\EncodedHtmlString($url); ?>" class="reset-button">
                         Verify Email
                     </a>
                 </div>
                 
                 <div class="expiry-notice">
                     <p>
-                        <strong>⏰ Time Sensitive:</strong> This password reset link will expire in <?php echo e($expire); ?> minutes for security reasons.
+                        <strong>⏰ Time Sensitive:</strong> This password reset link will expire in <?php echo new \Illuminate\Support\EncodedHtmlString($expire); ?> minutes for security reasons.
                     </p>
                 </div>
                 
@@ -217,11 +217,11 @@
                 <p class="footer-text">
                     Having trouble with the button? Copy and paste this link into your browser:
                 </p>
-                <a href="<?php echo e($url); ?>" class="footer-link"><?php echo e($url); ?></a>
+                <a href="<?php echo new \Illuminate\Support\EncodedHtmlString($url); ?>" class="footer-link"><?php echo new \Illuminate\Support\EncodedHtmlString($url); ?></a>
                 
                 <div class="copyright">
-                    <p>&copy; <?php echo e(date('Y')); ?> <?php echo e(config('app.name')); ?>. All rights reserved.</p>
-                    <p>This email was sent to <?php echo e($user->email); ?> because a new account created.</p>
+                    <p>&copy; <?php echo new \Illuminate\Support\EncodedHtmlString(date('Y')); ?> <?php echo new \Illuminate\Support\EncodedHtmlString(config('app.name')); ?>. All rights reserved.</p>
+                    <p>This email was sent to <?php echo new \Illuminate\Support\EncodedHtmlString($user->email); ?> because a new account created.</p>
                 </div>
             </div>
         </div>

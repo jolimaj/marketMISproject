@@ -23,39 +23,86 @@ class VolanteRentalRequest extends FormRequest
      */
     public function rules(): array
     {
-        $volanteRentalId = $this->route('volanteRental') ? $this->route('volanteRental')->id : null;
-        Log::info('VolanteRentalRequest rules called', [
-            'volanteRentalId' => $volanteRentalId,
-            'method' => $this->method(),
-            'all' => $this->all(),
+        $isCreate = $this->isMethod('post');
+        $volanteRentalId = $this->route('volanteRental')?->id;
+        $isRenewal = str_contains($this->fullUrl(), 'renew');
+
+        \Log::info('volanteRentalRequest validation', [
+            'volanteRentalId' =>  $volanteRentalId,
+            'route' => $this->fullUrl(),
+            'isRenewal' => $isRenewal,
         ]);
 
-        $isCreate = $this->isMethod('post'); // true for create, false for update
+        $step = $this->input('step');
 
+        $businessNameRules = [
+            $isCreate ? 'required' : 'nullable',
+            'string',
+            'max:255',
+        ];
+
+        // ✅ Only apply unique rule if NOT renewal
+        if (!$isRenewal) {
+            $businessNameRules[] = Rule::unique('stall_rentals')->ignore($volanteRentalId);
+        }
+
+        $rules = [
+            'step' => [$isCreate ? 'required' : 'nullable', 'integer', 'in:1,2,3,4'],
+            'stall_id' => [$isCreate || !$volanteRentalId ? 'required' : 'nullable', 'integer', 'exists:stalls,id'],
+            'business_name' => $businessNameRules,
+            'type' => 'nullable',
+            'fees' => ['nullable', 'array', 'min:1'],
+            'bulb' => ['nullable', 'integer', 'min:0'],
+            'total_payment' => ['nullable', 'numeric'],
+        ];
+
+        // Step 2 & 4 → allow requirements
+        if (in_array($step, [2, 4])) {
+            $rules += [
+                'requirements' => ['nullable', 'array'],
+                'requirements.*.requirement_checklist_id' => [
+                    'integer',
+                    'exists:requirement_checklists,id'
+                ],
+                'requirements.*.attachment' => [
+                    $isCreate ? 'required' : 'nullable',
+                    'file',
+                    'mimes:jpg,jpeg,png,pdf',
+                    'max:2048'
+                ],
+            ];
+        }
+
+        // Step 3 & 4 → allow signature
+        if (in_array($step, [3, 4])) {
+            $rules += [
+                'attachment_signature' => ['nullable', 'file', 'mimes:jpg,jpeg,png'],
+                'acknowledgeContract' => 'boolean|nullable'
+            ];
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Prepare inputs before validation.
+     */
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            // If bulb is not provided, default to 0
+            'bulb' => $this->input('bulb', 0),
+            'type' => $this->input('type', 1),
+            // Always default requirements to array so backend won’t break
+        ]);
+    }
+
+    public function messages()
+    {
         return [
-            'step' => ['integer'],
-            'stall_id' => [$isCreate ? 'required' : 'nullable', 'integer', 'exists:stalls,id'],
-            
-            'business_name' => [
-                $isCreate ? 'required' : 'nullable',
-                'string',
-                'max:255',
-                Rule::unique('stall_rentals')->ignore($volanteRentalId)
-            ],
-            'attachment_signature' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
-            'requirements' => ['nullable','array'],
-            'requirements.*.requirement_checklist_id' => [
-                'integer',
-                'exists:requirement_checklists,id'
-            ],
-            'requirements.*.attachment' => [
-                $isCreate ? 'required' : 'nullable',
-                'file',
-                'mimes:jpg,jpeg,png,pdf',
-                'max:2048'
-            ],
-            'fees' => ['nullable','array'],
-            'bulb' => ['nullable','integer','min:0'],
+            'stall_id.required' => 'Please select a slot.',
+            'stall_id.exists' => 'The selected slot is invalid.',
+            'fees.min' => 'You must add at least one fee item.',
         ];
     }
 

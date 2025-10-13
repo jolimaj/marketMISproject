@@ -7,7 +7,7 @@
         "dev": "vite"
     },
     "devDependencies": {
-        "@inertiajs/vue3": "^2.0",
+        "@inertiajs/vue3": "^2.2.7",
         "@tailwindcss/forms": "^0.5.7",
         "@tailwindcss/typography": "^0.5.10",
         "@tailwindcss/vite": "^4.0.0",
@@ -24,10 +24,14 @@
     "dependencies": {
         "@bundled-es-modules/pdfjs-dist": "^3.6.172-alpha.1",
         "@element-plus/icons-vue": "^2.3.1",
+        "@inertiajs/inertia": "^0.11.1",
         "@popperjs/core": "^2.11.8",
         "chart.js": "^4.5.0",
         "element-plus": "^2.10.4",
+        "jspdf": "^3.0.3",
+        "jspdf-autotable": "^5.0.2",
         "leaflet": "^1.9.4",
+        "lucide-vue-next": "^0.545.0",
         "map-geo-palengke-sample": "^1.0.8",
         "pdf-lib": "^1.17.1",
         "pdfjs-dist": "^5.4.149",

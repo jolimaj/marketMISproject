@@ -39,4 +39,10 @@ class Permits extends Model
         return $this->hasMany(ApprovalPermit::class,  'permit_id');
     }
 
+    public function routeNotificationForTwilio()
+    {
+        // assuming `mobile` field holds the user's phone number
+        return $this->mobile;
+    }
+
 }

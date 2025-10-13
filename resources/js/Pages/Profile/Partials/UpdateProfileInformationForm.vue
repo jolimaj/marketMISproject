@@ -22,6 +22,7 @@ const form = useForm({
     email: props.user.email,
     birthday: props.user.birthday,
     address: props.user.address,
+    mobile: props.user.mobile,
     photo: null,
 });
 
@@ -142,6 +143,7 @@ const clearPhotoFileInput = () => {
                     type="text"
                     class="mt-1 block w-full"
                     required
+                    disabled
                     autocomplete="first_name"
                 />
                 <InputError :message="form.errors.first_name" class="mt-2" />
@@ -153,6 +155,7 @@ const clearPhotoFileInput = () => {
                     id="middle_name"
                     v-model="form.middle_name"
                     type="text"
+                    disabled
                     class="mt-1 block w-full"
                     autocomplete="middle_name"
                 />
@@ -167,6 +170,7 @@ const clearPhotoFileInput = () => {
                     type="text"
                     class="mt-1 block w-full"
                     required
+                    disabled
                     autocomplete="last_name"
                 />
                 <InputError :message="form.errors.last_name" class="mt-2" />
@@ -190,6 +194,7 @@ const clearPhotoFileInput = () => {
                     id="address"
                     v-model="form.address"
                     type="text"
+                    disabled
                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                     required
                     autocomplete="address"
@@ -205,6 +210,7 @@ const clearPhotoFileInput = () => {
                     type="email"
                     class="mt-1 block w-full"
                     required
+                    disabled
                     autocomplete="username"
                 />
                 <InputError :message="form.errors.email" class="mt-2" />
@@ -228,6 +234,19 @@ const clearPhotoFileInput = () => {
                         A new verification link has been sent to your email address.
                     </div>
                 </div> -->
+            </div>
+            <div class="col-span-6 sm:col-span-4">
+                <InputLabel for="mobile" value="Mobile Number" />
+                <TextInput
+                    id="mobile"
+                    v-model="form.mobile"
+                    type="text"
+                    disabled
+                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                    required
+                    autocomplete="mobile"
+                />
+                <InputError class="mt-2" :message="form.errors.mobile" />
             </div>
         </template>
 

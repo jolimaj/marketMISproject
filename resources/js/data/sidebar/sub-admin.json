@@ -12,17 +12,17 @@
       {
         "label": "Stall Leasing",
         "icon": "stalls",
-        "link": "/department/applications/stall-rental-permits"
+        "link": "/department/applications/stall-leasing"
       },
       {
         "label": "Table Spaces",
         "icon": "table",
-        "link": "/department/applications/table-rental-permits"
+        "link": "/department/applications/table-spaces"
       },
             {
         "label": "Market Volante",
         "icon": "volante-type",
-        "link": "/department/applications/volante-rental-permits"
+        "link": "/department/applications/market-volante"
       }
     ]
   }

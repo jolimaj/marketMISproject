@@ -7,12 +7,9 @@ use Illuminate\Validation\Rule;
 
 class StallRentalRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true; // allow all authorized users; update if needed
+        return true;
     }
 
     /**
@@ -24,18 +21,33 @@ class StallRentalRequest extends FormRequest
     {
         $isCreate = $this->isMethod('post');
         $stallRentalId = $this->route('stallRental')?->id;
+        $isRenewal = str_contains($this->fullUrl(), 'renew');
+
+        \Log::info('StallRentalRequest validation', [
+            'stallRentalId' =>  $stallRentalId,
+            'route' => $this->fullUrl(),
+            'isRenewal' => $isRenewal,
+        ]);
+
         $step = $this->input('step');
 
+        $businessNameRules = [
+            $isCreate ? 'required' : 'nullable',
+            'string',
+            'max:255',
+        ];
+
+        // ✅ Only apply unique rule if NOT renewal
+        if (!$isRenewal) {
+            $businessNameRules[] = Rule::unique('stall_rentals')->ignore($stallRentalId);
+        }
+
         $rules = [
-            'step' => [ $isCreate ? 'required' : 'nullable', 'integer', 'in:1,2,3,4'],
-            'stall_id' => [$isCreate ? 'required' : 'nullable', 'integer', 'exists:stalls,id'],
-            'business_name' => [
-                $isCreate ? 'required' : 'nullable',
-                'string',
-                'max:255',
-                Rule::unique('stall_rentals')->ignore($stallRentalId)
-            ],
-            'fees' => ['nullable', 'array'],
+            'step' => [$isCreate ? 'required' : 'nullable', 'integer', 'in:1,2,3,4'],
+            'stall_id' => [$isCreate || !$stallRentalId ? 'required' : 'nullable', 'integer', 'exists:stalls,id'],
+            'business_name' => $businessNameRules,
+            'type' => 'nullable',
+            'fees' => ['nullable', 'array', 'min:1'],
             'bulb' => ['nullable', 'integer', 'min:0'],
             'total_payment' => ['nullable', 'numeric'],
         ];
@@ -76,8 +88,17 @@ class StallRentalRequest extends FormRequest
         $this->merge([
             // If bulb is not provided, default to 0
             'bulb' => $this->input('bulb', 0),
+            'type' => $this->input('type', 1),
             // Always default requirements to array so backend won’t break
-            'requirements' => $this->input('requirements', []),
         ]);
+    }
+
+    public function messages()
+    {
+        return [
+            'stall_id.required' => 'Please select a stall.',
+            'stall_id.exists' => 'The selected stall is invalid.',
+            'fees.min' => 'You must add at least one fee item.',
+        ];
     }
 }

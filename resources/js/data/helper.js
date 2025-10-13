@@ -16,6 +16,10 @@ export const isReuploadPage = (url)  => {
   return url?.includes('reupload')
 }
 
+export const isRenewalPage = (url)  => {
+  return url?.includes('renew')
+}
+
 export const formatDateShort = (dateString) => {
   const d = new Date(dateString)
   const year = d.getFullYear()

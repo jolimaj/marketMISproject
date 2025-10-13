@@ -81,4 +81,28 @@ class RequirementController extends Controller
         return $request->validated();
     }
 
+    public function deleteRequirements($permitId)
+    {
+        try {
+            // Delete all requirements for the given permit ID
+            Requirement::where('permit_id', $permitId)->delete();
+
+            Log::info("All requirements deleted for permit_id: {$permitId}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Requirements deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to delete requirements for permit_id: {$permitId}. Error: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete requirements.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
 }

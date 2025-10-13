@@ -37,7 +37,7 @@
                              </Badge>
                         </td>
                         <td class="px-4 py-3 capitalize text-center">{{formatAmount(bsn?.quarterly_payment)}}</td>
-                        <td class="px-4 py-3 capitalize text-center">{{formatDate(new Date(bsn?.next_payment_due))}}</td>
+                        <td class="px-4 py-3 capitalize text-center">{{ bsn?.next_payment_due ? formatDate(new Date(bsn?.next_payment_due)) : 'N/A'}}</td>
                         <td class="px-4 py-3 capitalize text-center">{{formatAmount(bsn?.penalty)}}</td>
                         <td class="px-4 py-3 capitalize text-center">
                             <p class="font-semibold" :class="bsn?.current_payment === 'Paid' ? 'text-green-600':'text-red-600'">{{bsn?.current_payment}}</p>
@@ -61,240 +61,190 @@
             <pagination :links="stallRentals?.links" />
         </div>
         <Drawer v-model="showDrawer" :title="'Application Details'" :data="drawerData.value">
-            <template #default>
+        <template #default>
             <div v-if="drawerData">
-                 <div class="ml-auto w-full max-w-xl bg-white shadow-lg h-full overflow-y-auto">
-                    <!-- Application Info Section -->
-                    <div class="p-4 border rounded-xl mb-4 bg-gray-50 flex justify-between items-center">
-                    <div class="flex items-center space-x-3">
-                        <!-- Car Icon -->
-                        <Icons name="stalls" class="block w-6 h-6 fill-primary" />
-                        <div>
-                        <p class="font-semibold text-primary">{{ `Stall Leasing Application (${drawerData?.permits?.type})` }}</p>
-                        <div class="flex items-center text-xs text-gray-500 space-x-2">
-                            <!-- Status Badge -->
-                            <Badge :color="status(drawerData?.permits.status).color">
-                                {{ status(drawerData?.permits.status).status }}
-                             </Badge>
-                            <span>{{`• Applied ${formatDateShort(drawerData.permits.created_at)}`}}</span>
-                        </div>
-                        </div>
+            <div class="h-full overflow-y-auto p-6 space-y-6">
+                
+                <!-- Application Info Section -->
+                <div class="p-4 border rounded-xl bg-gray-50 flex justify-between items-start">
+                <div class="flex items-start space-x-3">
+                    <Icons name="stalls" class="w-6 h-6 fill-primary mt-1" />
+                    <div>
+                    <p class="font-semibold text-primary text-base leading-tight">
+                        {{ `Stall Leasing Application (${drawerData?.permits?.type})` }}
+                    </p>
+                    <div class="flex items-center text-xs text-gray-500 space-x-2 mt-1">
+                        <Badge :color="status(drawerData?.permits.status).color">
+                        {{ status(drawerData?.permits.status).status }}
+                        </Badge>
+                        <span>{{`• Applied ${formatDateShort(drawerData.permits.created_at)}`}}</span>
                     </div>
+                    </div>
+                </div>
 
-                    <!-- Actions -->
-                    <div class="flex space-x-2" v-if="$page.props.auth.user?.role_id === 2">
-                        <button class="flex items-center px-3 py-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 text-sm" @click="rejectPermits">
-                        <!-- Reject SVG -->
+                <!-- Actions -->
+                <div class="flex space-x-2" v-if="$page.props.auth.user?.role_id === 2">
+                    <button
+                    class="flex items-center px-3 py-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 text-sm"
+                    @click="rejectPermits"
+                    >
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 
+                        011.414 0L10 8.586l4.293-4.293a1 1 0 
+                        111.414 1.414L11.414 10l4.293 4.293a1 1 
+                        01-1.414 1.414L10 11.414l-4.293 4.293a1 
+                        1 0 01-1.414-1.414L8.586 10 4.293 
+                        5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Reject
+                    </button>
+                    <form @submit.prevent="approveConfirm">
+                    <button
+                        class="flex items-center px-3 py-1.5 text-white bg-green-600 rounded-lg hover:bg-green-700 text-sm"
+                    >
                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" 
-                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" 
-                            clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 
+                            010 1.414l-8 8a1 1 0 
+                            01-1.414 0l-4-4a1 1 0 
+                            011.414-1.414L8 12.586l7.293-7.293a1 1 
+                            0 011.414 0z" clip-rule="evenodd" />
                         </svg>
+                        Approve
+                    </button>
+                    </form>
+                </div>
+                </div>
 
-                        Reject
+                <!-- Vendor Information -->
+                <div class="p-4 border rounded-xl space-y-2">
+                <h3 class="text-md font-semibold mb-4 text-primary">Vendor Information</h3>
+                <ul class="space-y-3 text-sm">
+                    <li class="flex items-center space-x-3">
+                    <svg class="w-4 h-4 text-secondary" viewBox="0 0 64 64" stroke="currentColor" fill="none">
+                        <circle cx="32" cy="20" r="8" />
+                        <path d="M16 52c0-8 8-14 16-14s16 6 16 14" />
+                    </svg>
+                    <span><strong class="text-secondary">Full Name: </strong><span class="text-gray-600">{{ fullName(drawerData?.vendor) }}</span></span>
+                    </li>
+
+                    <li class="flex items-center space-x-3">
+                    <svg class="w-4 h-4 text-secondary" viewBox="0 0 64 64" stroke="currentColor" fill="none">
+                        <rect x="10" y="16" width="44" height="32" rx="4" ry="4" />
+                        <polyline points="10,16 32,36 54,16" />
+                    </svg>
+                    <span><strong class="text-secondary">Email Address: </strong><span class="text-gray-600">{{ drawerData?.vendor?.email }}</span></span>
+                    </li>
+
+                    <li class="flex items-center space-x-3">
+                    <svg class="w-4 h-4 text-secondary" viewBox="0 0 64 64" stroke="currentColor" fill="none">
+                        <rect x="20" y="8" width="24" height="48" rx="4" ry="4" />
+                        <circle cx="32" cy="50" r="2" />
+                    </svg>
+                    <span><strong class="text-secondary">Phone Number: </strong><span class="text-gray-600">{{ drawerData?.vendor?.mobile }}</span></span>
+                    </li>
+
+                    <li class="flex items-center space-x-3">
+                    <svg class="w-4 h-4 text-secondary" viewBox="0 0 64 64" stroke="currentColor" fill="none">
+                        <path d="M32 8c-8 0-14 6-14 14 0 10 14 26 14 26s14-16 14-26c0-8-6-14-14-14z" />
+                        <circle cx="32" cy="22" r="4" />
+                    </svg>
+                    <span><strong class="text-secondary">Address: </strong><span class="text-gray-600">{{ drawerData?.vendor?.address }}</span></span>
+                    </li>
+
+                    <li class="flex items-center space-x-3">
+                    <svg class="w-4 h-4 text-secondary" viewBox="0 0 64 64" stroke="currentColor" fill="none">
+                        <rect x="10" y="14" width="44" height="40" rx="4" ry="4" />
+                        <line x1="10" y1="24" x2="54" y2="24" />
+                        <line x1="22" y1="8" x2="22" y2="20" />
+                        <line x1="42" y1="8" x2="42" y2="20" />
+                        <circle cx="32" cy="38" r="4" />
+                    </svg>
+                    <span><strong class="text-secondary">Birthday: </strong><span class="text-gray-600">{{ formatDateShort(drawerData?.vendor?.birthday) }}</span></span>
+                    </li>
+                </ul>
+                </div>
+
+                <!-- Business Information -->
+                <div class="p-4 border rounded-xl space-y-3">
+                <h3 class="text-md font-semibold mb-3 text-primary">Business Information</h3>
+                <ul class="space-y-3 text-sm">
+                    <li class="flex items-center space-x-3">
+                    <Icons name="business-names" class="w-4 h-4 text-secondary" />
+                    <span><strong class="text-secondary">Business Name: </strong><span class="text-gray-600">{{ drawerData?.name }}</span></span>
+                    </li>
+                    <li class="flex items-center space-x-3">
+                    <Icons name="business-category" class="w-4 h-4 text-secondary" />
+                    <span><strong class="text-secondary">Category: </strong><span class="text-gray-600">{{ drawerData?.stalls?.stallsCategories?.name }}</span></span>
+                    </li>
+                </ul>
+                </div>
+
+                <!-- Requirements -->
+                <div class="p-4 border rounded-xl space-y-3">
+                <h3 class="text-sm font-semibold mb-3 text-primary">Requirements Submitted</h3>
+                <ul class="space-y-3 text-sm">
+                    <li v-for="(doc, i) in drawerData.requirements" :key="i" class="flex justify-between items-center bg-gray-50 px-4 py-2 rounded-lg shadow-sm">
+                    <div class="flex items-center space-x-2">
+                        <Icons name="requirements" class="w-5 h-5 fill-primary" />
+                        <span class="text-gray-600">{{ doc.name }}</span>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <a
+                        v-if="doc.url"
+                        :href="`${doc.url}/${doc.attachment}`"
+                        class="text-blue-600 hover:text-blue-800 text-sm underline"
+                        target="_blank"
+                        >[View]</a>
+
+                        <button
+                        v-if="doc.url"
+                        @click="printAttachment(`${doc.url}/${doc.attachment}`)"
+                        class="flex items-center text-green-600 hover:text-green-800 text-sm"
+                        >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 9V2h12v7M6 18h12v4H6v-4zM6 14h12a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v3a2 2 0 002 2z" />
+                        </svg>
+                        Print
                         </button>
-                        <form @submit.prevent="approveConfirm">
-                            <button class="flex items-center px-3 py-1.5 text-white bg-green-600 rounded-lg hover:bg-green-700 text-sm">
-                            <!-- Approve SVG -->
-                           <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" 
-                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
-                                    clip-rule="evenodd"/>
-                            </svg>
-
-                            Approve
-                            </button>
-                        </form>
                     </div>
-                    </div>
+                    </li>
+                </ul>
+                </div>
 
-                    <!-- Applicant Information -->
-                    <div class="p-4 border rounded-xl mb-5">
-                        <h3 class="text-md font-semibold mb-3 text-primary">Vendor Information</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li class="flex items-center space-x-2">
-                            <!-- User SVG -->
-                            <svg class="w-4 h-4 text-secondary font-bold" fill="none" xmlns="http://www.w3.org/2000/svg" 
-                                viewBox="0 0 64 64" width="64" height="64"
-                                 stroke="currentColor" stroke-width="2" 
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <circle cx="32" cy="20" r="8"/>
-                            <path d="M16 52c0-8 8-14 16-14s16 6 16 14"/>
-                            </svg>
+                <!-- Payments -->
+                <div class="p-4 border rounded-xl space-y-3">
+                <h3 class="text-md font-semibold text-primary">Payments</h3>
+                <ul class="space-y-3 text-sm">
+                    <li v-for="(doc, i) in drawerData?.paymentDetails?.breakdown" :key="i" class="flex justify-between bg-gray-50 px-4 py-2 rounded-lg shadow-sm">
+                    <span><strong class="text-secondary">{{ doc?.type }}:</strong> <span class="text-gray-600">{{ formatAmount(doc?.amount) }}</span></span>
+                    </li>
+                    <li class="flex justify-between px-4 py-2">
+                    <strong class="text-secondary">Total:</strong>
+                    <span class="text-gray-600">{{ formatAmount(drawerData?.quarterly_payment) }}</span>
+                    </li>
+                </ul>
+                </div>
 
-                            <span>
-                                <strong class="text-secondary">Full Name: </strong>
-                                <span class="text-gray-600"> {{`${fullName(drawerData?.vendor)}` }}</span>
-                            </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                            <!-- Email SVG -->
-                            <svg class="w-4 h-4 text-secondary" fill="none" xmlns="http://www.w3.org/2000/svg" 
-                                viewBox="0 0 64 64" width="64" height="64"
-                               stroke="currentColor" stroke-width="2" 
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="10" y="16" width="44" height="32" rx="4" ry="4"/>
-                            <polyline points="10,16 32,36 54,16"/>
-                            </svg>
-
-                            <span>
-                                <strong class="text-secondary">Email Address: </strong>
-                                <span class="text-gray-600"> {{drawerData?.vendor?.email}}</span>
-                            </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                            <!-- Phone SVG -->
-                            <svg class="w-4 h-4 text-secondary" fill="none" xmlns="http://www.w3.org/2000/svg" 
-                                viewBox="0 0 64 64" width="64" height="64"
-                                 stroke="currentColor" stroke-width="2" 
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <rect x="20" y="8" width="24" height="48" rx="4" ry="4"/>
-                                <circle cx="32" cy="50" r="2"/>
-                            </svg>
-
-                                <span>
-                                <strong class="text-secondary">Phone Number: </strong>
-                                <span class="text-gray-600"> {{drawerData?.vendor?.mobile}}</span>
-                            </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <svg class="w-4 h-4 text-secondary" xmlns="http://www.w3.org/2000/svg" 
-                                    viewBox="0 0 64 64" width="64" height="64"
-                                    fill="none" stroke="currentColor" stroke-width="2" 
-                                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M32 8c-8 0-14 6-14 14 0 10 14 26 14 26s14-16 14-26c0-8-6-14-14-14z"/>
-                                <circle cx="32" cy="22" r="4"/>
-                                </svg>
-                                <span>
-                                    <strong class="text-secondary">Address: </strong>
-                                    <span class="text-gray-600"> {{drawerData?.vendor?.address}}</span>
-                                </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <svg class="w-4 h-4 text-secondary" xmlns="http://www.w3.org/2000/svg" 
-                                    viewBox="0 0 64 64" width="64" height="64"
-                                    fill="none" stroke="currentColor" stroke-width="2" 
-                                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <rect x="10" y="14" width="44" height="40" rx="4" ry="4"/>
-                                <line x1="10" y1="24" x2="54" y2="24"/>
-                                <line x1="22" y1="8" x2="22" y2="20"/>
-                                <line x1="42" y1="8" x2="42" y2="20"/>
-                                <circle cx="32" cy="38" r="4"/>
-                                </svg>
-
-                                <span>
-                                    <strong class="text-secondary">Birthday: </strong>
-                                    <span class="text-gray-600"> {{formatDateShort(drawerData?.vendor?.birthday)}}</span>
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-                    <!-- Business Information -->
-                    <div class="p-4 border rounded-xl mb-5">
-                        <h3 class="text-md font-semibold mb-3 text-primary">Business Information</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li class="flex items-center space-x-2">
-                            <!-- User SVG -->
-                            <Icons name="business-names" class="w-4 h-4 text-secondary"/>
-                            <span>
-                                <strong class="text-secondary">Business Name: </strong>
-                                <span class="text-gray-600">{{ drawerData?.name }}</span>
-                            </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                            <!-- Email SVG -->
-                            <Icons name="stall-names" class="w-4 h-4 text-secondary" />
-                            <span>
-                                <strong class="text-secondary">Stall Name: </strong>
-                                <span class="text-gray-600"> {{drawerData?.stalls?.name}}</span>
-                            </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                            <!-- Phone SVG -->
-                            <Icons name="business-category" class="w-4 h-4 text-secondary" />
-                            <span>
-                                <strong class="text-secondary">Category: </strong>
-                                <span class="text-gray-600"> {{drawerData?.stalls?.stallsCategories?.name}}</span>
-                            </span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <!-- Calendar SVG -->
-                                <Icons name="business-size" class="w-4 h-4 text-secondary" />
-                                <span>
-                                    <strong class="text-secondary">Stall Size: </strong>
-                                    <span class="text-gray-600"> {{drawerData?.stalls?.size ? `${JSON.parse(drawerData?.stalls.size)?.length} X ${JSON.parse(drawerData?.stalls.size)?.width}` : '-'}}</span>
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-                     <!-- Requirements Submitted -->
-                    <div class="p-4 border rounded-xl mb-5">
-                        <h3 class="text-sm font-semibold mb-3 text-primary">Requirements Submitted</h3>
-                        <ul class="space-y-2 text-sm ">
-                                <li v-for="(doc, i) in drawerData.requirements" :key="i" class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg shadow-sm">
-                                <div class="flex items-center space-x-2">
-                                    <Icons name="requirements" class="block w-6 h-6 fill-primary" />
-                                    <span class="text-gray-600 text-sm">{{ doc.name }}</span>
-                                </div>
-
-                                <button class="flex items-center px-2 py-1 text-blue-600 hover:text-blue-800 text-sm">
-                                    <a
-                                    v-if="doc.url"
-                                    :href="`${doc.url}/${doc.attachment}`"
-                                    class="text-blue-600 ml-2 hover:underline"
-                                    target="_blank"
-                                >
-                                    [View]
-                                </a>
-                                </button>
-                                </li>
-                            </ul>
-                    </div>
-                     <!-- Payments -->
-                    <div class="p-4 border rounded-xl mb-5">
-                        <h3 class="text-md font-semibold mb-3 text-primary">Payments</h3>
-                         <ul class="space-y-2 text-sm">
-                            <li class="flex items-center space-x-2">
-                                <ul class="space-y-2">
-                                    <li v-for="(doc, i) in drawerData?.paymentDetails?.breakdown" :key="i" class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg shadow-sm">
-                                    <div class="flex items-center space-x-2">
-                                    <span>
-                                            <strong class="text-secondary">{{`• ${doc?.type}: `}} </strong>
-                                            <span class="text-gray-600"> {{formatAmount(doc?.amount)}}</span>
-                                        </span>
-                                    </div>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <span>
-                                    <strong class="text-secondary">Total: </strong>
-                                    <span class="text-gray-600"> {{formatAmount(drawerData?.quarterly_payment)}}</span>
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-                     <!-- Approvals -->
-                    <div class="p-4 border rounded-xl" v-if="drawerData?.approvals?.length > 0">
-                        <h3 class="text-md font-semibold mb-3 text-primary">Approvals</h3>
-                         <ul class="space-y-2 text-sm">
-                            <li class="flex items-center space-x-2">
-                                <ul class="space-y-2">
-                                    <li v-for="(approval, i) in drawerData?.approvals" :key="i" class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg shadow-sm">
-                                    <div class="flex items-center space-x-2">
-                                        <span>
-                                            <strong class="text-secondary">{{`${approval?.department}: `}} </strong>
-                                            <span class="text-gray-600"> {{`${approval?.approver?.name}(${approval?.approver?.position})`}}</span>
-                                        </span>
-                                    </div>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </div>      
-                </div>                   
+                <!-- Approvals -->
+                <div class="p-4 border rounded-xl space-y-3" v-if="drawerData?.approvals?.length > 0">
+                <h3 class="text-md font-semibold text-primary">Approvals</h3>
+                <ul class="space-y-3 text-sm">
+                    <li
+                    v-for="(approval, i) in drawerData?.approvals"
+                    :key="i"
+                    class="flex justify-between bg-gray-50 px-4 py-2 rounded-lg shadow-sm"
+                    >
+                    <span>
+                        <strong class="text-secondary">{{ approval?.department }}: </strong>
+                        <span class="text-gray-600">{{ `${approval?.approver?.name} (${approval?.approver?.position}) - ${approval?.status === 1 ? 'Approved' : 'Rejected'}` }}</span>
+                    </span>
+                    </li>
+                </ul>
+                </div>
             </div>
-            </template>
+            </div>
+        </template>
         </Drawer>
         <ConfirmationModal :show="isRejected" @close="closeRejection">
                 <template #title>
@@ -330,7 +280,7 @@
                         <SecondaryButton @click="closeRejection">
                             Cancel
                         </SecondaryButton>
-                    <form @submit.prevent="rejectConfirm">
+                    <form @submit="rejectConfirm">
 
                         <DangerButton
                             :disabled="!forms.remarks"
@@ -428,6 +378,13 @@ function getDetails(data) {
     drawerData.value = data;
     showDrawer.value = true;
 }
+
+const printAttachment = (printUrl) =>{
+    const newWindow = window.open(printUrl, "_blank");
+    newWindow.focus();
+    newWindow.print();
+};
+
 //0-pending,1- approved, 2-rejected, 3- expired
 const status = (stat) => {
     let statuss = {
@@ -487,7 +444,9 @@ const rejectConfirm = () => {
         {
             onSuccess: () => {
                 forms.reset()
-                showDrawer.value = false
+                showDrawer.value = false;
+                drawerData.value = {};
+                isRejected.value = false;
             },
         }
     )

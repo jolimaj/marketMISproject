@@ -147,13 +147,17 @@
             </div>  
             <!-- Actions -->
             <div class="flex justify-end gap-2">
-                <button @click="goToEdit(stallRental.id)" class="p-2 rounded-lg h bg-blue-600 text-white over:bg-blue-700" 
-                :disabled="stallRental?.permits?.status > 0">
+                <button @click="goToEdit(stallRental.id)" :class="stallRental?.permits?.status === 0 || stallRental?.expiringSoon ? 'p-2 rounded-lg h bg-blue-600 text-white over:bg-blue-700' : 'p-2 rounded-lg h bg-blue-100 text-white over:bg-blue-100'"  
+                :disabled="stallRental?.permits?.status !== 0 || stallRental?.expiringSoon">
                     Edit
                 </button>
                 <button @click="goToReupload(stallRental.id)" class="p-2 rounded-lg hover:bg-red-200" 
-                :class="stallRental?.permits?.status === 2 ? 'bg-red-600 text-white' : 'bg-red-200 text-white'" :disabled="stallRental?.permits?.status !== 2">
+                :class="stallRental?.permits?.status === 2 || stallRental?.expiringSoon ? 'bg-red-600 text-white' : 'bg-red-200 text-white'" :disabled="stallRental?.permits?.status !== 2 || stallRental?.expiringSoon">
                     Reupload Requirements
+                </button>
+                <button @click="goToEdit(stallRental.id)" :class="stallRental?.expiringSoon ? 'p-2 rounded-lg h bg-green-600 text-white over:bg-green-700' : 'p-2 rounded-lg h bg-green-100 text-white over:bg-green-100'" 
+                :disabled="!stallRental?.expiringSoon">
+                    Renew
                 </button>
             </div>
         </div>

@@ -3,6 +3,7 @@ import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
+    chunkSizeWarningLimit: 1000, // (optional) raise limit to 1MB
     plugins: [
         laravel({
             input: 'resources/js/app.js',
@@ -26,6 +27,6 @@ export default defineConfig({
             manualChunks: undefined, // optional tweak to control chunking
         },
     },
-                cssCodeSplit: true, // ensures CSS is split and loaded with JS
+        cssCodeSplit: true, // ensures CSS is split and loaded with JS
     }
 });

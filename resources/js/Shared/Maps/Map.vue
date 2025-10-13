@@ -37,7 +37,8 @@ const props = defineProps({
   scopeData: { type: Object, default: null },
   center: { type: Array, default: () => [13.965601, 121.527501] },
   zoom: { type: Number, default: 20 },
-  height: { type: String, default: "600px" }
+  height: { type: String, default: "600px" },
+  disabled: { type: Boolean, default: false },
 });
 const emit = defineEmits(["stall-click"]);
 
@@ -115,12 +116,14 @@ function initMapOnceVisible() {
     pointToLayer: (feature, latlng) => L.marker(latlng),
     onEachFeature: (feature, layer) => {
       const propsData = feature.properties || {};
-      layer.on("click", (e) => {
-        selectedStall.value = propsData;
-        const point = map.latLngToContainerPoint(e.latlng);
-        popupPosition.value = { x: point.x + 10, y: point.y - 10 };
-        emit("stall-click", propsData);
-      });
+      if(!props?.disabled){
+        layer.on("click", (e) => {
+          selectedStall.value = propsData;
+          const point = map.latLngToContainerPoint(e.latlng);
+          popupPosition.value = { x: point.x + 10, y: point.y - 10 };
+          emit("stall-click", propsData);
+        });
+      }
     }
   }).addTo(map);
 

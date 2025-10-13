@@ -10,13 +10,15 @@
           class="flex items-center justify-between p-3 border rounded-lg bg-gray-50"
         >
           <div>
-            <p class="text-sm font-medium text-gray-900">{{ `${doc.name}(${doc?.isRequired ? 'Required' : 'Optional'})` }}</p>
+            <p class="text-sm font-medium text-gray-900">
+              {{ `${doc.name} (${doc?.isRequired ? 'Required' : 'Optional'})` }}
+            </p>
             <p class="text-xs text-gray-500">{{ doc.description }}</p>
           </div>
           <div 
             class="w-5 h-5 rounded-full flex items-center justify-center"
-            :class="isDocumentUploaded(doc.id) 
-              ? 'bg-green-500 text-white' 
+            :class="isDocumentUploaded(doc.id)
+              ? 'bg-green-500 text-white'
               : 'bg-gray-200 text-gray-500'"
           >
             <svg 
@@ -75,22 +77,33 @@
       <div 
         v-for="file in uploadedFiles" 
         :key="file.id"
-        class="flex items-center justify-between p-3 border rounded-lg bg-gray-50"
+        class="p-3 border rounded-lg bg-gray-50 space-y-1"
       >
-        <div class="flex-1 truncate">
-          <p class="text-sm text-gray-800 truncate">{{ file.name }}</p>
-          <p class="text-xs text-gray-500">{{ formatFileSize(file.size) }}</p>
+        <div class="flex items-center justify-between">
+          <div class="flex-1 truncate">
+            <p class="text-sm text-gray-800 truncate">{{ file.name }}</p>
+            <p class="text-xs text-gray-500">{{ formatFileSize(file.size) }}</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span v-if="file.status === 'uploading'" class="text-xs text-primary">Uploading...</span>
+            <span v-else-if="file.status === 'uploaded'" class="text-xs text-green-600">Uploaded</span>
+            <span v-else-if="file.status === 'error'" class="text-xs text-red-600">Failed</span>
+            <button 
+              @click="removeFile(file.id)" 
+              class="text-xs text-red-500 hover:underline"
+            >
+              Remove
+            </button>
+          </div>
         </div>
-        <div class="flex items-center space-x-3">
-          <span v-if="file.status === 'uploading'" class="text-xs text-primary">Uploading...</span>
-          <span v-else-if="file.status === 'uploaded'" class="text-xs text-green-600">Uploaded</span>
-          <span v-else-if="file.status === 'error'" class="text-xs text-red-600">Failed</span>
-          <button 
-            @click="removeFile(file.id)" 
-            class="text-xs text-red-500 hover:underline"
-          >
-            Remove
-          </button>
+
+        <!-- Progress bar -->
+        <div class="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+          <div 
+            class="h-2 bg-blue-500 transition-all duration-300"
+            :class="{'bg-green-500': file.status === 'uploaded'}"
+            :style="{ width: file.progress + '%' }"
+          ></div>
         </div>
       </div>
     </div>
@@ -101,15 +114,12 @@
 export default {
   name: "DocumentUploader",
   props: {
-    requiredDocs: {
-      type: Array,
-    }
+    requiredDocs: Array
   },
   data() {
     return {
       uploadedFiles: [],
-      acceptedFileTypes: ".pdf,.jpg,.jpeg,.png",
-      a: 0 // counter for documentType
+      acceptedFileTypes: ".pdf,.jpg,.jpeg,.png"
     }
   },
   methods: {
@@ -120,27 +130,26 @@ export default {
       this.handleFiles(e.target.files)
     },
     handleFiles(files) {
-      Array.from(files).forEach(file => {
+      Array.from(files).forEach((file, index) => {
         if (this.validateFile(file)) {
-            console.log(file)
+          const docId = this.requiredDocs[index]?.id || index + 1
           const fileObj = {
             id: Date.now() + Math.random(),
             name: file.name,
             size: file.size,
             type: file.type,
             file,
-            status: "pending",
+            status: "uploading",
             progress: 0,
-            documentType: this.a + 1  // will be mapped manually
+            documentType: docId
           }
           this.uploadedFiles.push(fileObj)
-          this.uploadFile(fileObj)
-          this.a++ // increment after assigning
+          this.simulateUpload(fileObj)
         }
       })
     },
     validateFile(file) {
-      const maxSize = 5 * 1024 * 1024 // 5MB
+      const maxSize = 5 * 1024 * 1024
       const validTypes = ["application/pdf", "image/jpeg", "image/png"]
       if (!validTypes.includes(file.type)) {
         alert("Invalid file type: " + file.name)
@@ -152,32 +161,33 @@ export default {
       }
       return true
     },
-    uploadFile(fileObj) {
-      fileObj.status = "uploading"
-      const interval = setInterval(() => {
-        if (fileObj.progress < 100) {
-          fileObj.progress += 20
-        } else {
-          clearInterval(interval)
-          fileObj.progress = 100
-          fileObj.status = "uploaded"
-          this.$emit("update:files", this.uploadedFiles)
-        }
-      }, 500)
+    simulateUpload(fileObj) {
+      const steps = [10, 30, 60, 90, 100]
+      steps.forEach((value, i) => {
+        setTimeout(() => {
+          const index = this.uploadedFiles.findIndex(f => f.id === fileObj.id)
+          if (index !== -1) {
+            this.uploadedFiles[index].progress = value
+            if (value === 100) {
+              this.uploadedFiles[index].status = "uploaded"
+              this.$emit("update:files", this.uploadedFiles)
+            }
+          }
+        }, 400 * (i + 1))
+      })
     },
     formatFileSize(size) {
       const kb = size / 1024
-      return kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb/1024).toFixed(1)} MB`
+      return kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(1)} MB`
     },
     removeFile(id) {
       this.uploadedFiles = this.uploadedFiles.filter(f => f.id !== id)
       this.$emit("update:files", this.uploadedFiles)
     },
-    isDocumentUploaded(docKey) {
-      return this.uploadedFiles.some(f => {
-        console.log(f.documentType , docKey);
-        return f.documentType === docKey && f.status === "uploaded"
-      })
+    isDocumentUploaded(docId) {
+      return this.uploadedFiles.some(
+        f => f.documentType === docId && f.status === "uploaded"
+      )
     }
   }
 }

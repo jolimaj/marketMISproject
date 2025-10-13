@@ -9,7 +9,7 @@
          <h1 class="mb-8 text-3xl font-bold">
           <Link class="text-primary hover:text-secondary" :href="`/my-rentals/stall-leasing`">Stalls Leasing</Link>
           <span class="text-secondary font-medium">/</span>
-          {{checkIfEdit() || checkIfReupload() ? `${props?.stallRental?.name}` : 'Create New'}}
+          {{titlePage()}}
         </h1>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
           <div class="max-w-3xl bg-white rounded-md shadow overflow-hidden">
@@ -83,7 +83,7 @@
                 <span class="mt-2 text-sm" :class="step === 4 ? 'text-primary font-semibold' : 'text-gray-400'">Finish Application</span>
               </div>
             </div>
-            <form @submit.prevent="checkIfEdit() || checkIfReupload() ? update() : nextButton()">
+            <form @submit.prevent="submitRequest">
               <!-- Step 1: Input Details -->
               <div v-if="!checkIfReupload() && (step === 1 || checkIfEdit())" class="p-6 space-y-6">
                 <div class="flex flex-col md:flex-row gap-4 px-5">
@@ -95,6 +95,7 @@
                           type="text"
                           class="mt-1 block w-full"
                           required
+                          :disabled="checkIfRenewal()"
                           autofocus
                           autocomplete="business_name"
                       />
@@ -135,9 +136,9 @@
                           :center="[13.965601, 121.527501]"
                           :zoom="20"
                           height="500px" 
+                          :disabled="checkIfEdit() || checkIfRenewal()"
                           @stall-click="onStallSelect"
                         />
-                      <StallsMap @stall-select="onStallSelect" :disabled="checkIfEdit()" />
                     </div>
                     <InputError class="mt-2" :message="form?.errors?.stall_id" />
                   </div>
@@ -262,7 +263,7 @@
                 <Link :href="checkIfEdit() ? `/my-rentals/stall-leasing/${stallRental?.id}` : '/my-rentals/stall-leasing'" class="text-red-600 hover:underline" tabindex="-1">Cancel</Link>
                 
                 <div class="ml-auto flex gap-2">
-                  <div v-if="!checkIfEdit() && !checkIfReupload()">
+                  <div v-if="!checkIfEdit() && !checkIfReupload() || checkIfRenewal()">
                     <button
                       v-if="step > 1"
                       type="button"
@@ -286,7 +287,7 @@
                     class="bg-primary ml-auto"
                     type="submit"
                   >
-                    Submit
+                    {{checkIfEdit() || checkIfReupload() ? 'Submit' : 'Continue'}}
                   </loading-button>
                 </div>
               </div>
@@ -295,7 +296,7 @@
         </div>
         <ConfirmationModal :show="isSubmit" @close="closeSubmit">
                 <template #title>
-                    Pay Now
+                    Confirm
                 </template>
 
                 <template #content>
@@ -313,9 +314,9 @@
                       <SecondaryButton @click="closeSubmit">
                           Cancel
                         </SecondaryButton>
-                        <form @submit.prevent="stores">
-                       <!-- Submit button -->
-                         <loading-button class="bg-green-600 text-white ml-2 px-4 py-2 rounded-md  text-white hover:bg-green-700" @click="submit" :disabled="isGenerating">
+                        <form @submit.prevent="checkIfRenewal() ? renewals(): submit()">
+                       <!-- stores button -->
+                         <loading-button class="bg-green-600 text-white ml-2 px-4 py-2 rounded-md  text-white hover:bg-green-700"  :disabled="isGenerating">
                             Submit
                          </loading-button>
                          <!-- Hidden contract filler -->
@@ -339,9 +340,10 @@
 <script setup>
 import { defineProps, ref, watch, computed, onMounted } from 'vue';
 import { Link, usePage, useForm, router } from '@inertiajs/vue3';
-import { formatAmount, formatDateShort, formatStallStatus, fullName, isEditPage, isReuploadPage, mapTablesToGeoJSON } from '@/data/helper';
+import { Inertia } from '@inertiajs/inertia';
+
+import { formatAmount, formatDateShort, fullName, isEditPage, isRenewalPage, isReuploadPage, mapTablesToGeoJSON } from '@/data/helper';
 import scopeData from "@/data/assets/scopeData.json";
-import stalls from "@/data/assets/stalls.json";
 
 import AppLayout from '@/Layouts/AppLayout.vue'
 import TextInput from '@/Components/TextInput.vue'
@@ -389,19 +391,38 @@ const checkIfReupload = () => {
   return isReuploadPage(page.url);
 };
 
+const checkIfRenewal = () => {
+  console.log('checkIfRenewal(page.url)', isRenewalPage(page.url))
+  return isRenewalPage(page.url);
+};
+
+const titlePage = () => {
+  if(checkIfReupload() || checkIfRenewal() || checkIfEdit()){
+    return props?.stallRental?.name
+  }
+
+  return 'Create New'
+};
+
 const form = useForm({ 
-  business_name: checkIfEdit() || checkIfReupload() ?  props?.stallRental?.name : '',
-  stall_id: checkIfEdit() || checkIfReupload() ? props?.stallRental?.stalls?.id : '',
+  type: checkIfRenewal() ?  2 : 1,
+  business_name: checkIfRenewal() || checkIfEdit() || checkIfReupload() ?  props?.stallRental?.name : '',
+  stall_id: checkIfRenewal() || checkIfEdit() || checkIfReupload() ? props?.stallRental?.stalls?.id : '',
   requirements: [],
-  acknowledgeContract: checkIfEdit() || checkIfReupload() ? props?.stallRental?.acknowledgeContract : '',
-  reference_number: checkIfEdit() || checkIfReupload() ? props?.stallRental?.paymentRecord?.reference_number : '',
+  acknowledgeContract: checkIfRenewal() || checkIfEdit() || checkIfReupload() ? props?.stallRental?.acknowledgeContract : '',
+  reference_number: checkIfRenewal() || checkIfEdit() || checkIfReupload() ? props?.stallRental?.paymentRecord?.reference_number : '',
   attachment_signature: [],
-  total_payment: checkIfEdit() || checkIfReupload() ? props?.stallRental?.paymentRecord?.total_payments : 0,
-  fees: checkIfEdit() || checkIfReupload() ? Array.isArray(props?.stallRental?.fees_additional)
+  total_payment: checkIfRenewal() || checkIfEdit() || checkIfReupload() ? props?.stallRental?.paymentRecord?.total_payments : 0,
+  fees: checkIfRenewal() || checkIfEdit() || checkIfReupload() ? Array.isArray(props?.stallRental?.fees_additional)
   ? props?.stallRental?.fees_additional.map(Number)
   : [] : [],
-  step,
-  bulb: checkIfEdit() || checkIfReupload() ? props?.stallRental?.bulb : null,
+  step: step.value, 
+  bulb: checkIfRenewal() || checkIfEdit() || checkIfReupload() ? props?.stallRental?.bulb : null,
+  stall_rental_id: checkIfRenewal() || checkIfEdit() || checkIfReupload() ? props?.stallRental?.id : null,
+});
+
+const reuploadForm = useForm({ 
+  requirements: [],
 });
 
 // Field mapping across multiple pages
@@ -423,6 +444,9 @@ const initials = computed(() => {
 });
 
 const submit = () => {
+  if(handleBulb(form.fees) && form.bulb < 0) {
+    form.errors.bulb = "Please input number of bulbs.";
+  }
   form.requirements = checkIfEdit()
     ? props?.stallRental?.requirements.map(f => ({
         requirement_checklist_id: f.checklist_id,
@@ -444,7 +468,7 @@ const submit = () => {
       preserveScroll: true,
   
       onSuccess: async () => {
-        // isGenerating.value = false; // hide spinner
+        isGenerating.value = false; // hide spinner
         router.visit(route("applications.stalls.index"), {
           preserveScroll: true,
           preserveState: false,
@@ -458,93 +482,247 @@ const submit = () => {
   }
 };
 
-const update = () => {
-  console.log(checkIfReupload() , localFileReq.value.length > 0, checkIfReupload() && localFileReq.value.length > 0);
-    if(checkIfReupload()) {
-      if (localFileReq.value.some(file => file.status === 'uploading')) {
-       form.errors.requirements = "Please wait until all files are uploaded."
-      } 
-      else if (localFileReq.value.length === 0) {
-        form.errors.requirements = "The requirements are required."
+const renewals = async () => {
+    if (localFileReq.value.some(file => file.status === 'uploading')) {
+      form.errors.requirements = "Please wait until all files are uploaded.";
+      return;
+    }
+    if (localFileReq.value.length === 0) {
+      form.errors.requirements = "The requirements are required.";
+      return;
+    }
+
+    // ✅ Build a FormData payload (always use FormData for file uploads)
+    const fd = new FormData();
+
+    // Laravel route expects PUT, so we spoof it
+    fd.append('_method', 'PUT');
+
+    // --- Append normal fields (add any others you need) ---
+    fd.append('stall_id', form.stall_id || '');
+    fd.append('business_name', form.business_name || '');
+    fd.append('type', 2);
+    fd.append('bulb', form.bulb || '');
+    fd.append('total_payment', form.total_payment || '');
+    fd.append('acknowledgeContract', form.acknowledgeContract ? 1 : 0);
+
+    // --- Append requirements + files ---
+    localFileReq.value.forEach((f, i) => {
+      fd.append(`requirements[${i}][requirement_checklist_id]`, f.documentType);
+      if (f.file instanceof File) {
+        fd.append(`requirements[${i}][attachment]`, f.file);
       }
-      else {
-        form.requirements =  localFileReq.value;
-        form.put(route('applications.stalls.update', props?.stallRental?.id), {
-          onSuccess: () => {
-              form.reset();
-              localFileReq.value = [];
-            }
+    });
+
+    // --- Optional: append signature if exists ---
+    if (form.attachment_signature instanceof File) {
+      fd.append('attachment_signature', form.attachment_signature);
+    }
+    isGenerating.value = true; // show spinner
+    contractRef.value?.fillContract(); // wait for download
+    // ✅ Send request using POST (with _method spoofed as PUT)
+    Inertia.post(route('applications.stalls.update', props?.stallRental?.id), fd, {
+      preserveScroll: true,
+      onStart: () => { isGenerating.value = true; },
+      onSuccess: () => {
+        router.visit(route("applications.stalls.index"), {
+          preserveScroll: true,
+          preserveState: false,
         });
-      }
-        
-    }
-    else{
-      form.put(route('applications.stalls.update', props?.stallRental?.id), {
-        onSuccess: () => {
-            form.reset();
-          }
-      });
-    }
-  
+      },
+      onError: (errors) => {
+        isGenerating.value = false;
+        console.error("Form errors:", errors);
+      },
+    });
 };
 
-const stores = () => {
-  const edit = checkIfEdit() || checkIfReupload();
-  console.log(edit);
-  if(edit){
-    return update();
-  }
+const update = () => {
+  // check if we're in re-upload flow
+  if (checkIfReupload()) {
+    // 🧪 Basic validation before sending
+    if (localFileReq.value.some(file => file.status === 'uploading')) {
+      form.errors.requirements = "Please wait until all files are uploaded.";
+      return;
+    }
+    if (localFileReq.value.length === 0) {
+      form.errors.requirements = "The requirements are required.";
+      return;
+    }
 
-  return submit();
-}
+    // ✅ Build a FormData payload (always use FormData for file uploads)
+    const fd = new FormData();
+
+    // Laravel route expects PUT, so we spoof it
+    fd.append('_method', 'PUT');
+
+    // --- Append normal fields (add any others you need) ---
+    fd.append('stall_id', form.stall_id || '');
+    fd.append('business_name', form.business_name || '');
+    fd.append('type', form.type || '');
+    fd.append('bulb', form.bulb || '');
+    fd.append('total_payment', form.total_payment || '');
+    fd.append('acknowledgeContract', form.acknowledgeContract ? 1 : 0);
+
+    // --- Append requirements + files ---
+    localFileReq.value.forEach((f, i) => {
+      fd.append(`requirements[${i}][requirement_checklist_id]`, f.documentType);
+      if (f.file instanceof File) {
+        fd.append(`requirements[${i}][attachment]`, f.file);
+      }
+    });
+
+    // --- Optional: append signature if exists ---
+    if (form.attachment_signature instanceof File) {
+      fd.append('attachment_signature', form.attachment_signature);
+    }
+
+    // ✅ Send request using POST (with _method spoofed as PUT)
+    Inertia.post(route('applications.stalls.update', props?.stallRental?.id), fd, {
+      preserveScroll: true,
+      onStart: () => { isGenerating.value = true; },
+      onSuccess: () => {
+        isGenerating.value = false;
+        router.visit(route("applications.stalls.index"), {
+          preserveScroll: true,
+          preserveState: false,
+        });
+      },
+      onError: (errors) => {
+        isGenerating.value = false;
+        console.error("Form errors:", errors);
+      },
+    });
+
+  } else {
+    // ✅ Normal update without file re-upload
+    const fd = new FormData();
+    fd.append('_method', 'PUT');
+    if(handleBulb(form.fees) && form.bulb < 0) {
+      form.errors.bulb = "Please input number of bulbs.";
+    }
+    fd.append('stall_id', form.stall_id || '');
+    fd.append('business_name', form.business_name || '');
+    fd.append('type', form.type || '');
+    fd.append('bulb', form.bulb || 0);
+    fd.append('total_payment', props?.total_payments?.total || 0);
+    fd.append('acknowledgeContract', form.acknowledgeContract ? 1 : 0);
+
+
+    if(checkIfRenewal()){
+      fd.append('type', 2);
+
+      if (localFileReq.value.some(file => file.status === 'uploading')) {
+        form.errors.requirements = "Please wait until all files are uploaded.";
+        return;
+      }
+      if (localFileReq.value.length === 0) {
+        form.errors.requirements = "The requirements are required.";
+        return;
+      }
+
+      // --- Append requirements + files ---
+      localFileReq.value.forEach((f, i) => {
+        fd.append(`requirements[${i}][requirement_checklist_id]`, f.documentType);
+        if (f.file instanceof File) {
+          fd.append(`requirements[${i}][attachment]`, f.file);
+        }
+      });
+
+    }
+
+    if (form.attachment_signature instanceof File) {
+      fd.append('attachment_signature', form.attachment_signature);
+    }
+
+    
+
+    Inertia.post(route('applications.stalls.update', props?.stallRental?.id), fd, {
+      preserveScroll: true,
+      onStart: () => { isGenerating.value = true; },
+      onSuccess: () => {
+        isGenerating.value = false;
+        contractRef.value?.fillContract();
+        router.visit(route("applications.stalls.index"), {
+          preserveScroll: true,
+          preserveState: false,
+        });
+      },
+      onError: (errors) => {
+        isGenerating.value = false;
+        console.error("Form errors:", errors);
+      },
+    });
+  }
+};
+
+const submitRequest = () => {
+  if (checkIfEdit() || checkIfReupload()) {
+    update();
+  }  else {
+    nextButton();
+  }
+};
 
 const feeDetails = (fee) => {
   return `${formatAmount(fee.amount)} per sqr mtr`
 }
 
 const nextButton = () => {
-  console.log(step.value);
+  if(handleBulb(form.fees) && form?.bulb < 0) {
+    form.errors.bulb = "Please input number of bulbs.";
+    return;
+  }
+  console.log('step', handleBulb(form.fees) && form.bulb < 0);
+  console.log(step.value, isRenewalPage());
   if (step.value === 1) {
-    if(checkIfEdit()){
-      step.value++;
-    } else {
-      form.post(route("applications.stalls.validate"), {
-        preserveState: true,
+         if(checkIfRenewal()){
+        form.put(route('applications.stalls.renew', props?.stallRental?.id), {
         onSuccess: () => {
-          step.value++;
-        }
-      })
-    }
-  } 
-  else if (step.value === 2) {
-    if(checkIfEdit()){
-      step.value++;
-    }
-    else {
-      if (localFileReq.value.some(file => file.status === 'uploading')) {
-       form.errors.requirements = "Please wait until all files are uploaded."
-      } 
-      else if (localFileReq.value.length === 0) {
-        form.errors.requirements = "The requirements are required."
+            step.value++;
+          }
+        })
       }
       else {
+
+        form.post(route("applications.stalls.store"), {
+          preserveState: true,
+          onSuccess: () => {
+            step.value++;
+          }
+        })
+      }
+  } 
+  else if (step.value === 2) {
+      const totalRequired = props?.requirements?.stall_new?.length || 0;
+      const uploaded = localFileReq.value.filter(file => file.status === "uploaded").length;
+      const uploading = localFileReq.value.some(file => file.status === "uploading");
+
+      console.log("Required:", totalRequired, "Uploaded:", uploaded, "Uploading:", uploading);
+
+      // Validation logic
+      if (uploading) {
+        form.errors.requirements = "Please wait until all files are uploaded.";
+      } 
+      else if (uploaded < totalRequired) {
+        form.errors.requirements = "Please upload all required documents.";
+      } 
+      else if (uploaded === 0) {
+        form.errors.requirements = "The requirements are required.";
+      } 
+      else {
+        form.errors.requirements = null;
         step.value++;
       }
-    }
-
   }
   else if (step.value === 3) {
-    if(checkIfEdit()){
-      step.value++;
-    }
-    else {
-      localFileSignature.value = signature.value,
-      step.value++;
-    }
+    localFileSignature.value = signature.value,
+    step.value++;
 
   }
   else if(step.value === 4) {
     form.step = step.value;
+    console.log('checkIfRenewal', checkIfRenewal());
     contractData.value = {
       lesseeName: fullName(props?.auth?.user),
       lesseeNamePage2: fullName(props?.auth?.user),
@@ -555,7 +733,6 @@ const nextButton = () => {
       month: new Date().getMonth() + 1,
     };
     isSubmit.value = true;
-
   }
 };
 
@@ -567,7 +744,6 @@ const onStallSelect = (stall) => {
    selectedStall.value = val[0];
   form.stall_id = val[0]?.id
 };
-
 
 const closeSubmit = () => {
     isSubmit.value = false;
@@ -593,7 +769,7 @@ watch(
 );
 
 onMounted(() => {
-  if (checkIfEdit()) {
+  if (checkIfEdit() || checkIfRenewal()) {
     onStallSelect(props?.stallRental?.stalls);
   }
 });

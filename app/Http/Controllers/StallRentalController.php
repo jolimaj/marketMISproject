@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 use App\Http\Requests\StallRentalRequest;
+use App\Http\Requests\StallRentalRenewRequest;
+use App\Http\Requests\StallRentalEditRequest;
 
 use App\Models\StallRental;
 use App\Models\Stall;
@@ -26,6 +28,7 @@ use App\Http\Controllers\PermitController;
 use App\Http\Controllers\RequirementController;
 
 use Carbon\Carbon;
+use App\Services\TwilioService;
 
 class StallRentalController extends Controller
 {
@@ -58,24 +61,33 @@ class StallRentalController extends Controller
         ]);
     }
 
-    public function edit(StallRental $stallRental): Response|RedirectResponse
+    public function edit(Request $request, StallRental $stallRental): Response|RedirectResponse
     {
+        if (
+            Str::contains($request->fullUrl(), 'renew') && !$stallRental->expiringSoon ||
+            Str::contains($request->fullUrl(), 'reupload') &&  $stallRental->permits->status !== 3 ||  $stallRental->permits->status === 3) {
+                Log::warning('Attempted renewal for non-expiring stall rental', [
+                    'stall_rental_id' => $stallRental->id,
+                ]);
+                return back()->with('error', 'Stall rental application is not yet expiring!');
+        }
+
         $user = Auth::user();
-        if ($user->role_id !== 3 && $stallRental->status === 1) {
+        if ($user && $user->role_id !== 3 && $stallRental->status === 1) {
             return redirect()->route('department.applications.stalls');
         }
 
         return Inertia::render('Users/Applications/StallRental/Form', array_merge(
-                ['stallRental' => $this->getSingleData($stallRental)],
-                $this->getCreatePayload()
+            ['stallRental' => $this->getSingleData($stallRental)],
+            $this->getCreatePayload()
         ));
     }
 
-    public function validate(StallRentalRequest $request)
+    public function store(StallRentalRequest $request)
     {
         $payload = $request->validated();
         $total_payments = 0;
-        // Step 1 → calculate payment
+                // Step 1 → calculate payment
         if (isset($payload['step']) && $payload['step'] == 1) {
 
             $stall = Stall::with('stallsCategories')->findOrFail((int) $payload['stall_id']);
@@ -102,30 +114,86 @@ class StallRentalController extends Controller
                 ->withViewData(['step' => 2]);
         }
 
-        // Step 2 → just return current props, no changes
+        // Step 3 → just return current props, no changes
         if (isset($payload['step']) && $payload['step'] == 3) {
             return Inertia::render('Users/Applications/StallRental/Form')
                 ->withViewData(['step' => 3]);
         }
 
-       
+        // Step 4 → just return current props, no changes
+        if (isset($payload['step']) && $payload['step'] == 4) {
+            $payload['fees_additional'] = $payload['fees'];
+            $this->addData($payload, $request);
+
+            return back()->with('success', 'Stall rental application created successfully.');
+        }
+    
         // Default fallback
         return back()->withErrors(['step' => 'Invalid step provided.']);
+        
     }
 
-    public function store(StallRentalRequest $request)
+    public function renewal(StallRentalRequest $request, StallRental $stallRental)
     {
-        $payload = $request->validated();
-        Log::info('StallRentalController@store request', [
-            'payload' => $payload,
-            'user_id' => Auth::id(),
-        ]);
-        // Step 1 → calculate payment
-        $payload['fees_additional'] = $payload['fees'];
-        $this->addData($payload, $request);
+        $payload = $request->all();
+        $step = $payload['step'] ?? null;
 
-        // Instead of redirect here, return a "success flag"
-        return back()->with('success', 'Stall rental application created successfully.');
+        // 🔍 Log incoming payload for debugging
+        Log::info('StallRentalController@renewal payload', $payload);
+
+        if (is_null($step)) {
+            return back()->withErrors(['step' => 'Step is required.']);
+        }
+
+        switch ((int) $step) {
+            case 1:
+                // 🧮 Calculate payment
+                $stall = Stall::with('stallsCategories')->findOrFail((int) $payload['stall_id']);
+                [$feeMasterlist, $fees_additional] = $this->prepareFees($request, $stall);
+
+                $total_payments = $this->calculateStallRentalPaymentFromFees(
+                    (int) $payload['bulb'] ?? 0,
+                    $stall,
+                    $feeMasterlist,
+                    $fees_additional
+                );
+
+                return Inertia::render('Users/Applications/StallRental/Form', array_merge(
+                    [
+                        'stallRental' => $this->getSingleData($stallRental),
+                    ],
+                    $this->getCreatePayload(),
+                    [
+                        'total_payments' => $total_payments,
+                    ]
+                ))->withViewData(['step' => 1]);
+
+            case 2:
+                // 📎 Handle requirements
+                return Inertia::render('Users/Applications/StallRental/Form', array_merge(
+                    $this->getCreatePayload(),
+                    [
+                        'requirementsPayload' => $payload['requirements'] ?? [],
+                    ]
+                ))->withViewData(['step' => 2]);
+
+            case 3:
+                // ✍️ Contract signature step
+                return Inertia::render('Users/Applications/StallRental/Form')
+                    ->withViewData(['step' => 3]);
+
+            case 4:
+                // ✅ Final update and save
+                $payload['fees_additional'] = $payload['fees'] ?? [];
+
+                // Use only validated payload for update (avoid $request->all())
+                $this->updateData($stallRental, $payload);
+
+                return back()->with('success', 'Stall rental application renewed successfully.');
+
+            default:
+                return back()->withErrors(['step' => 'Invalid step provided.']);
+        }
     }
 
     public function create(): Response
@@ -133,30 +201,39 @@ class StallRentalController extends Controller
         return Inertia::render('Users/Applications/StallRental/Form', $this->getCreatePayload());
     }
 
-    public function update(StallRentalRequest $request, StallRental $stallRental): Response|RedirectResponse
+    public function update(StallRentalEditRequest $request, StallRental $stallRental): Response|RedirectResponse
     {
-        $this->updateData($stallRental, $request->all());
+        $payload = collect($request)
+            ->except(['_token', '_method', 'step'])
+            ->filter(fn($value) => !is_null($value) && $value !== '')
+            ->toArray();
+        $this->updateData($stallRental, $request->all(), $request);
         return redirect()->route('applications.stalls.index')->with('success', 'Stall rental application updated successfully.');
     }
 
-    public function approveRental(Request $request, StallRental $stallRental) : RedirectResponse
+    public function approveRental(Request $request, StallRental $stallRental): Response|RedirectResponse
     {
         $rentalDetails = $this->getSingleData($stallRental);
         $approvalDetails = $this->approve($rentalDetails);
-        return redirect()->route('department.applications.stalls')->with('success',  'Stall rental approved successfully.');
+        Log::info('Stall rental approved', [
+            'stall_rental_id' => $stallRental->id,
+            'approval_details' => $approvalDetails,
+        ]);
+        
+        return back()->with('success',  'Stall rental approved successfully.');
     }
 
-    public function rejectRental(Request $request, StallRental $stallRental) : RedirectResponse
+    public function rejectRental(Request $request, StallRental $stallRental): Response|RedirectResponse
     {
         $request->validate([
             'remarks' => 'required|string|max:255',
         ]);
         $this->disApprove($stallRental, $request->all());
-        return redirect()->route('department.applications.stalls')->with('success', 'Stall rental rejected.');
+        return back()->with('success', 'Stall rental rejected.');
     }
 
     public function countAllPerCategoryAndStall() {
-        return StallRental::with('stall.stallsCategories')
+        return StallRental::with('stalls.stallsCategories')
             ->where('status', 1)
             ->get()
             ->groupBy(fn ($rental) => $rental->stall?->stallsCategories?->name)
@@ -207,7 +284,7 @@ class StallRentalController extends Controller
 
     public function storeApi(StallRentalRequest $request)
     {  
-          $payload = $request->validated();
+        $payload = $request->validated();
         $total_payments = 0;
         // Step 1 → calculate payment
         if (isset($payload['step']) && $payload['step'] == 1) {
@@ -334,6 +411,7 @@ class StallRentalController extends Controller
 
         // Merge request fees with bulb fee if needed
         $feesIds = $request->fees_additional ? json_decode($request->fees_additional , true) : $request->fees ?? [];
+        // dd($feesIds);
         if (!is_array($feesIds)) {
             $feesIds = json_decode($feesIds, true) ?? [];
         }
@@ -546,6 +624,7 @@ class StallRentalController extends Controller
                     'currentPayment' => $currentPayment,
                     'current_payment' => count($currentPayment) > 0 ? 'Paid' : 'Not Paid',
                     'paymentDetails' => $paymentDetails,
+                    'expiringSoon' => $data->expiringSoon,
                     'approvals' => $permits->approvals ? $permits->approvals->map(function ($approval) {
                         return [
                             'id' => $approval->id,
@@ -816,10 +895,8 @@ class StallRentalController extends Controller
         ];
     }
 
-    private function updateData(StallRental $stallRental, array $payload)
+    private function updateData(?StallRental $stallRental, array $payload, ?StallRentalEditRequest $request = null)
     {
-        $stallRental->fill($payload)->save();
-
         $stallController = new StallsListController();
         $permitController = new PermitController();
 
@@ -841,39 +918,134 @@ class StallRentalController extends Controller
         } else {
             // If stall_id didn’t change → still update the current stall to status = 2
             $stallController->statusUpdate(
-                new Request(['status' => 3]),
+                new Request(['status' => 2]),
                 Stall::findOrFail((int) $stallRental->stall_id)
             );
         }
 
+        Log::info('Payload for updateData', [
+            'payload' => $payload,
+            'stallRental'=>$stallRental
+        ]);
+        unset($payload['step']);
+        $permitPayload = $payload;
+
+        if(isset($payload['status']) && $payload['status'] == 2) {
+            $permitPayload['status'] = 2;
+            unset($payload['status']);// keep table rental status as is (3 = rejected)
+        }
+
+        if(isset($payload['status']) && $payload['status'] == 1) {
+            $permitPayload['status'] = 1;
+             unset($payload['status']);// keep table rental status as is (3 = rejected)
+        }
+        
+        if (isset($payload['type']) && (int)$payload['type'] === 2) {
+            $permitPayload['issued_date'] = null;
+            $permitPayload['expiry_date'] = null;
+            $permitPayload['assign_to'] = 2;
+            $permitPayload['is_initial'] = true;
+            $permitPayload['department_id'] = 2;
+            $permitPayload['status'] = 0; // 2 = pending or renewal, adjust as needed
+            $payload['status'] = 0; // set table rental status to pending (0), adjust if needed
+        }
+
+        if(isset($payload['fees'])) {
+            $payload['fees_additional'] = !empty($payload['fees']) 
+            ? json_encode($payload['fees']) 
+            : null;
+        }
+        if(!empty($payload['attachment_signature'])){
+            $file = $request->file('attachment_signature');
+            $uuidName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+
+            $path = $file->storeAs(
+                'uploads',
+                'attachment_signature-' . $payload['business_name'] . '-' . $uuidName,
+                'public'
+            );
+
+            $payload['attachment_signature'] = $path;
+
+        }
+        else{
+            unset($payload['attachment_signature']);
+        }
+
+        if (!isset($payload['bulb'])) {
+            $payload['bulb'] = 0;
+        }
+
+        if (empty($payload['total_payment'])) {
+            unset($payload['total_payment']);
+        }
+
+        unset($permitPayload['_method']);
+        unset($permitPayload['total_payment']);
+        unset($permitPayload['business_name']);
+        unset($permitPayload['requirements']);
+        unset($permitPayload['fees']);
+        unset($permitPayload['fees_additional']);
+        unset($permitPayload['stall_rental_id']);
+        unset($permitPayload['stall_id']);
+        unset($permitPayload['acknowledgeContract']);
+        unset($permitPayload['attachment_signature']);
+        unset($permitPayload['bulb']);
+
+
+        $permitController->update($permitPayload, $stallRental->permit_id);
         // Update requirements if present
+   
         if (isset($payload['requirements']) && is_array($payload['requirements'])) {
             $requirementController = new RequirementController();
-            $permitController->update([
-                'assign_to' => 2, // assign to approver
-                'is_initial' => false
-            ], $stallRental->id);
+
+            $approvalRejection = ApprovalPermit::where('permit_id', $stallRental->permit_id)
+                ->where('status', 2) // rejected
+                ->first();
+            Log::info('Handling requirements update for StallRental', [
+                'stall_rental_id' => $stallRental->id,
+                'permit_id' => $stallRental->permit_id,
+                'approval_rejection' => $approvalRejection ? $approvalRejection->toArray() : null,
+            ]);
+            if ($approvalRejection) {
+                $permitController->update([
+                'status' => 0, // back to pending
+                'assign_to' => 2,
+                'department_id' => $approvalRejection->department_id,
+                'is_initial' => $stallRental->permits->is_initial,
+                ], $stallRental->permit_id);
+            } else {
+                Log::warning("No rejection record found for permit_id {$stallRental->permit_id}");
+            }
+
+            $requirementController->deleteRequirements($stallRental->permit_id);
+
             foreach ($payload['requirements'] as $requirementData) {
                 if (isset($requirementData['id'])) {
-                    $requirementController->updateRequirement($requirementData['id'], $requirementData);
+                $requirementController->updateRequirement($requirementData['id'], $requirementData);
                 } else {
-                    $requirementData['permit_id'] = $stallRental->permit_id;
-                    $requirementController->addRequirements([$requirementData]);
+                $requirementData['permit_id'] = $stallRental->permit_id;
+                $requirementController->addRequirements([$requirementData]);
                 }
             }
+            ApprovalPermit::where('permit_id', $stallRental->permit_id)
+            ->where('status', 2) // rejected
+            ->delete();
         }
 
         Log::info('Stall Rental updated successfully.', [
             'id' => $stallRental->id,
             'updated_data' => $stallRental->toArray()
         ]);
-
-        return $stallRental;
+        
+        return $stallRental->update($payload);
     }
-
 
     private function disApprove($stallRental, array $payload) {
         $user = Auth::user();
+        $vendor = (object)$stallRental['vendor'];
+        $permit = (object)$stallRental['permits'];
+
         $approvalPermitController = new ApprovalPermitController();
 
         $approvalPermitController->storeApproval(
@@ -890,12 +1062,30 @@ class StallRentalController extends Controller
                 'assign_to' => 1, // 1 = user
                 'is_initial' => false, // set to false when forwarded to user
             ], $stallRental->permit_id);
-        // Send SMS or Email notification to user about approval
-        // Notification::send($stallRental->user, new StallRentalApproved($stallRental));
+
+        // Send SMS notification to user about rejection         
+        if ($vendor) {
+            $twilioService = new TwilioService();
+            
+            $msg  = "Your application for Stall Rental has been rejected due to: {$payload['remarks']}.\n\n";
+            $msg .= "Permit Details:\n";
+            $msg .= "Permit No.: {$permit->permit_number}\n";
+            $msg .= "Issued Date: {$permit->issued_date}\n";
+            $msg .= "Expiry Date: {$permit->expiry_date}\n\n";
+            $msg .= "From: Market MIS";
+
+            $twilioService->sendSms($vendor->mobile, $msg);
+        }
     }
 
     private function approve($stallRental) {
         $user = Auth::user();
+        $vendor = (object)$stallRental['vendor'];
+        Log::info('Approving StallRental', [
+            'stall_rental_id' => $stallRental['id'],
+            'vendor' => $vendor ? $vendor : null,
+            'user' => $user ? $user->id : null,
+        ]);
         $permit = (object)$stallRental['permits'];
 
         $currentDeptId = $permit->department_id; // Approver's department
@@ -915,15 +1105,20 @@ class StallRentalController extends Controller
                 'is_initial' => false
             ], $permit->id);
            
+            return response()->json(['message' => 'Office of Public Market Initial approval done. Your application was sent to Office of the Mayor.']);
+        }
+
+        // STEP 2: Office of the Mayor >   Market 
+        if (!$permit->is_initial && $currentDeptId === 3 && $permit->status == 0) {
+            $permitController->update([
+                'department_id' => 2, // Office of the Public Market
+            ], $permit->id);
+           
             return response()->json(['message' => 'Office of Public Market Initial approval done. Sent to Office of the Mayor.']);
         }
 
         // STEP 3: Office of the Mayor >   Market → Final Approval
-        if (!$permit->is_initial && $currentDeptId === 3 && $permit->status == 0) {
-             $permitController->update([
-                'department_id' => 2, // Office of the Public Market
-            ], $permit->id);
-            
+        if (!$permit->is_initial && $currentDeptId === 2 && $permit->status == 0) {
             $requiredDepartments = [
                 2, // Public Market
                 3, // OFFICE OF THE MUNICIPAL MAYOR
@@ -947,21 +1142,36 @@ class StallRentalController extends Controller
                 'expiry_date'   => Carbon::now()->copy()->addYears(3)->toDateString(),
                 'assign_to'     => 1,
                 'permit_number' => $permitController->generatePermitNumber(10),
-                'department_id' => null
+                'department_id' => 0
             ], $permit->id);
-
-            $this->updateData($stallRental, ['status' => 1]);
+            Log::info('Approving TableRental', [
+                'table_rental_id' => $stallRental,
+                'status' => 1,
+            ]);
+            $stallRentalModel = StallRental::findOrFail($stallRental['id']);
+            $this->updateData($stallRentalModel, ['status' => 1]);
 
             $stallController = new StallsListController();
             // Update stall status to 'assigned' (3)
             $stallController->statusUpdate(
                 new Request(['status' => 1]),
-                Stall::findOrFail((int) $stallRental->stall_id)
+                Stall::findOrFail((int) $stallRentalModel['stall_id'])
             );
+
+            // Send SMS for approval notification to user about approval
+          
+            if ($vendor) {
+                $twilioService = new TwilioService();
+                $msg = "Your application for Stall Rental has been approved. \n";
+                $msg .= "Permit No.: {$permit->permit_number}\n";
+                $msg .= "Issued Date: {$permit->issued_date}\n";
+                $msg .= "Expiry Date: {$permit->expiry_date}\n";
+                $twilioService->sendSms($vendor->mobile, $msg);
+            }
+
         }
 
-        // Send SMS or Email notification to user about approval
-        // Notification::send($stallRental->user, new StallRentalApproved($stallRental));
+      
         return [
             'message' => 'Volante rental approved successfully.',
             'stallRental' => $stallRental,

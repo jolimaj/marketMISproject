@@ -73,35 +73,42 @@ Route::middleware(['auth', CheckUserRole::class . ':3'])->group(function () {
     Route::get('my-rentals/stall-leasing', [StallRentalController::class, 'index'])->name('applications.stalls.index');
     Route::get('my-rentals/stall-leasing/{stallRental}/edit', [StallRentalController::class, 'edit'])->name('applications.stalls.edit');
     Route::get('my-rentals/stall-leasing/{stallRental}/reupload', [StallRentalController::class, 'edit'])->name('applications.stalls.reupload');
+    Route::get('my-rentals/stall-leasing/{stallRental}/renew', [StallRentalController::class, 'edit'])->name('applications.stalls.renew');
+    Route::put('/my-rentals/stall-leasing/{stallRental}/renew', [StallRentalController::class, 'renewal'])
+        ->name('applications.stalls.renew');
     Route::get('my-rentals/stall-leasing/create', [StallRentalController::class, 'create'])->name('applications.stalls.create');
-    Route::post('my-rentals/stall-leasing/create', [StallRentalController::class, 'validate'])->name('applications.stalls.validate');
+    Route::post('my-rentals/stall-leasing/validate', [StallRentalController::class, 'validate'])->name('applications.stalls.validate');
     Route::get('my-rentals/stall-leasing/{stallRental}', [StallRentalController::class, 'show'])->name('applications.stalls.show');
     Route::post('my-rentals/stall-leasing', [StallRentalController::class, 'store'])->name('applications.stalls.store');
     Route::put('my-rentals/stall-leasing/{stallRental}/update', [StallRentalController::class, 'update'])->name('applications.stalls.update');
 
     // volante
-    // Route::get('my-rentals/market-volante', [VolanteRentalController::class, 'index'])->name('applications.volantes.index');
+    Route::get('my-rentals/market-volante', [VolanteRentalController::class, 'index'])->name('applications.volantes.index');
     Route::get('my-rentals/market-volante/create', [VolanteRentalController::class, 'create'])->name('applications.volantes.create');
-     Route::get('my-rentals/market-volante/validate', [VolanteRentalController::class, 'fieldValidator'])
+    Route::get('my-rentals/market-volante/{volanteRental}/reupload', [VolanteRentalController::class, 'edit'])->name('applications.volantes.reupload');
+    Route::post('my-rentals/market-volante/validate', [VolanteRentalController::class, 'validate'])
         ->name('applications.volantes.validate');
-    Route::get('my-rentals/market-volante/validate-requirements', [RequirementController::class, 'fieldValidator'])
-        ->name('applications.volantes.validate-requirements');
     Route::post('my-rentals/market-volante', [VolanteRentalController::class, 'store'])
         ->name('applications.volantes.store')->middleware('auth');
+    Route::get('my-rentals/market-volante/{volanteRental}', [VolanteRentalController::class, 'show'])->name('applications.volantes.show')->middleware('auth');
     Route::get('my-rentals/market-volante/{volanteRental}/edit', [VolanteRentalController::class, 'edit'])->name('applications.volantes.edit')->middleware('auth');
     Route::put('my-rentals/market-volante/{volanteRental}/update', [VolanteRentalController::class, 'update'])->name('applications.volantes.update')->middleware('auth');
     // table
-    // Route::get('my-rentals/table-spaces', [TablesController::class, 'index'])->name('applications.table.index');
+    Route::get('my-rentals/table-spaces', [TablesController::class, 'index'])->name('applications.table.index');
     Route::get('my-rentals/table-spaces/create', [TablesController::class, 'create'])->name('applications.table.create');
     Route::middleware([ValidateVolanteDates::class])->group(function () {
         Route::get('my-rentals/table-spaces/validate', [VolanteRentalController::class, 'fieldValidator'])
         ->name('applications.table.validate');
     });
+    Route::get('my-rentals/table-spaces/{tableRental}/renew', [TablesController::class, 'edit'])->name('applications.table.renew');
+    Route::put('my-rentals/table-spaces/{tableRental}/renew', [TablesController::class, 'renewal'])->name('applications.table.renew');
     Route::post('my-rentals/table-spaces', [TablesController::class, 'store'])
         ->name('applications.table.store')->middleware('auth');
     Route::get('my-rentals/table-spaces/{tableRental}/edit', [TablesController::class, 'edit'])->name('applications.table.edit')->middleware('auth');
     Route::put('my-rentals/table-spaces/{tableRental}/update', [TablesController::class, 'update'])->name('applications.table.update')->middleware('auth');
     Route::post('my-rentals/table-spaces/payment', [PaymentController::class, 'paymentNow'])->name('applications.payment')->middleware('auth');
+    Route::get('my-rentals/table-spaces/{tableRental}', [TablesController::class, 'show'])->name('applications.table.show');
+    Route::get('my-rentals/table-spaces/{tableRental}/reupload', [TablesController::class, 'edit'])->name('applications.table.reupload');
 
 });
 
@@ -190,33 +197,33 @@ Route::middleware(['auth', CheckUserRole::class . ':2'])->group(function () {
     Route::get('department/dashboard', [UserController::class, 'index'])
         ->name('department.dashboard')
         ->middleware('auth');
-    Route::get('department/applications/volante-rental-permits/{volanteRental}', [VolanteRentalController::class, 'show'])
+    Route::get('department/applications/market-volante/{volanteRental}', [VolanteRentalController::class, 'show'])
         ->name('department.applications.volantes.show')
         ->middleware('auth');
-    Route::get('department/applications/volante-rental-permits', [VolanteRentalController::class, 'index'])->name('department.applications.volantes')->middleware('auth');
-    Route::put('department/applications/volante-rental-permits/{volanteRental}/approve', [VolanteRentalController::class, 'approveVolante'])
+    Route::get('department/applications/market-volante', [VolanteRentalController::class, 'index'])->name('department.applications.volantes')->middleware('auth');
+    Route::put('department/applications/market-volante/{volanteRental}/approve', [VolanteRentalController::class, 'approveVolante'])
         ->name('department.applications.volantes.approve')
         ->middleware('auth');
 
-    Route::put('department/applications/volante-rental-permits/{volanteRental}/reject', [VolanteRentalController::class, 'rejectolante'])
+    Route::put('department/applications/market-volante/{volanteRental}/reject', [VolanteRentalController::class, 'rejectVolante'])
         ->name('department.applications.volantes.reject')
         ->middleware('auth');
 
-    Route::get('department/applications/stall-rental-permits', [StallRentalController::class, 'index'])->name('department.applications.stalls')->middleware('auth');
-    Route::put('department/applications/stall-rental-permits/{stallRental}/approve', [StallRentalController::class, 'approveRental'])
+    Route::get('department/applications/stall-leasing', [StallRentalController::class, 'index'])->name('department.applications.stalls')->middleware('auth');
+    Route::put('department/applications/stall-leasing/{stallRental}/approve', [StallRentalController::class, 'approveRental'])
         ->name('department.applications.stalls.approve')
         ->middleware('auth');
 
-    Route::put('department/applications/stall-rental-permits/{stallRental}/reject', [StallRentalController::class, 'rejectRental'])
+    Route::put('department/applications/stall-leasing/{stallRental}/reject', [StallRentalController::class, 'rejectRental'])
         ->name('department.applications.stalls.reject')
         ->middleware('auth');
     
-    Route::get('department/applications/table-rental-permits', [TablesController::class, 'index'])->name('department.applications.table')->middleware('auth');
-    Route::put('department/applications/table-rental-permits/{tableRental}/approve', [TablesController::class, 'approveRental'])
+    Route::get('department/applications/table-spaces', [TablesController::class, 'index'])->name('department.applications.table')->middleware('auth');
+    Route::put('department/applications/table-spaces/{tableRental}/approve', [TablesController::class, 'approveTable'])
         ->name('department.applications.table.approve')
         ->middleware('auth');
-
-    Route::put('department/applications/table-rental-permits/{tableRental}/reject', [TablesController::class, 'rejectRental'])
-        ->name('department.applications.table                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                .reject')
+    Route::put('department/applications/table-spaces/{tableRental}/reject', [TablesController::class, 'rejectTable'])
+        ->name('department.applications.table.reject')
         ->middleware('auth');
+
 });
