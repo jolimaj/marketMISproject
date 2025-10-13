@@ -12,10 +12,14 @@ import DatePick from '@/Shared/DatePick.vue';
 import SelectInput from '@/Shared/SelectInput.vue';
 import barangays from '@/data/barangays.json';
 import { EyeIcon, EyeOffIcon } from 'lucide-vue-next';
+import PrivacyPolicy from '../PrivacyPolicy.vue';
+import TermsOfService from '../TermsOfService.vue';
 
 const selectedGender = ref(1);
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
+const showTermsModal = ref(false);
+const showPrivacyModal = ref(false);
 
 const form = useForm({
   first_name: '',
@@ -80,6 +84,26 @@ const passwordStrength = computed(() => {
 watch(selectedGender, (val) => {
   form.gender_id = val;
 });
+
+const handlePrivacyAccept = () => {
+  form.terms = true;
+  showPrivacyModal.value = false;
+};
+
+const handlePrivacyDecline = () => {
+  form.terms = false;
+  showPrivacyModal.value = false;
+};
+
+const handleTermsAccept = () => {
+  form.terms = true;
+  showTermsModal.value = false;
+};
+
+const handleTermsDecline = () => {
+  form.terms = false;
+  showTermsModal.value = false;
+};
 </script>
 
 <template>
@@ -228,13 +252,21 @@ watch(selectedGender, (val) => {
                   <Checkbox id="terms" v-model:checked="form.terms" name="terms" required />
                   <div class="text-sm text-gray-600 leading-snug">
                     I agree to the
-                    <a target="_blank" :href="route('terms.show')" class="underline hover:text-gray-900">
+                     <button
+                      type="button"
+                      @click="showTermsModal = true"
+                      class="underline hover:text-gray-900 text-blue-600"
+                    >
                       Terms of Service
-                    </a>
+                    </button>
                     and
-                    <a target="_blank" :href="route('policy.show')" class="underline hover:text-gray-900">
+                     <button
+                      type="button"
+                      @click="showPrivacyModal = true"
+                      class="underline hover:text-gray-900 text-blue-600"
+                    >
                       Privacy Policy
-                    </a>
+                    </button>
                   </div>
                 </div>
                 <InputError :message="form.errors.terms" />
@@ -281,6 +313,40 @@ watch(selectedGender, (val) => {
       </div>
     </div>
   </div>
+<div
+  v-if="showPrivacyModal"
+  class="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+>
+  <div
+    class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-0 relative overflow-hidden max-h-[90vh] flex flex-col"
+  >
+    <button
+      @click="showPrivacyModal = false"
+      class="absolute top-3 right-3 text-gray-500 hover:text-black z-10"
+    >
+      <XIcon class="w-6 h-6" />
+    </button>
+
+    <PrivacyPolicy :onAccept="handlePrivacyAccept" :onDecline="handlePrivacyDecline" />
+  </div>
+</div>
+<div
+  v-if="showTermsModal"
+  class="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+>
+  <div
+    class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-0 relative overflow-hidden max-h-[90vh] flex flex-col"
+  >
+    <button
+      @click="showTermsModal= false"
+      class="absolute top-3 right-3 text-gray-500 hover:text-black z-10"
+    >
+      <XIcon class="w-6 h-6" />
+    </button>
+
+    <TermsOfService :onAccept="handleTermsAccept" :onDecline="handleTermsDecline" />
+  </div>
+</div>
 </template>
 
 
