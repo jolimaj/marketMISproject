@@ -49,7 +49,7 @@
                                 {{ user?.status ? 'Active': 'Not Active' }}
                              </Badge>
                         </td>
-                        <td class="px-4 py-3 capitalize" v-if="checkDateStatus(new Date(user?.joinDate))">
+                        <td class="px-4 py-3 capitalize" v-if="checkDateStatus(new Date(user?.joinDate)) && !user?.status">
                            <Link
                             method="post"
                             as="button"
