@@ -42,7 +42,7 @@ class UserRequest extends FormRequest
             'address' => 'required|string|max:255',
             'mobile' => ['required', 'string', 'max:12', new MobileNumber],
             'birthday' => 'string|max:255',
-            'email' => ['required','string','max:255',$users
+            'email' => ['string','max:255',$users
                 ? Rule::unique('users')->ignore($users) // ignore if editing
                 : Rule::unique('users')],
             'password' => [

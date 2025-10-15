@@ -107,7 +107,7 @@
                         v-model="form.email"
                         type="email"
                         class="mt-1 block w-full"
-                        :required="checkIfEdit()"
+                        :required="!checkIfEdit()"
                         :disabled ="checkIfEdit()"
                         autocomplete="email"
                     />
