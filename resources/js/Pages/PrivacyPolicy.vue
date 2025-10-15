@@ -13,7 +13,7 @@ const props = defineProps({
   <div class="flex flex-col items-center justify-center p-6 text-gray-700 overflow-y-auto">
     <!-- Logo -->
     <div class="flex justify-center mb-6">
-      <Logo class="w-32 h-auto" />
+      <Logo class="w-24 h-24 object-contain" />
     </div>
 
     <!-- Title -->
