@@ -17,6 +17,7 @@ class PermitController extends Controller
             1 => 'Approved',
             2 => 'Rejected',
             3 => 'Expired',
+            4 => 'Terminated',
         ];
 
         $rawCounts = Permits::select('status', DB::raw('COUNT(*) as total'))

@@ -29,6 +29,8 @@ class Kernel extends Command
     }
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command('app:terminate-unpaid-permits')->dailyAt('08:00');
+        $schedule->command('app:notify-payment')->dailyAt('08:00');
         $schedule->command('rental:check-renewals')->everyTwoMinutes();
     }
 

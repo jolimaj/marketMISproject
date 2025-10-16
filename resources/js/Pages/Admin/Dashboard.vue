@@ -120,7 +120,7 @@ const pieData = {
   datasets: [{
     label: 'Applications',
     data: props.permitStatusCounts.map((item) => item.total),
-    backgroundColor: ['#6366F1', '#10B981', '#F59E0B', '#EF4444'],
+    backgroundColor: ['blue', '#10B981', 'rose', 'orange', 'red'],
   }]
 }
 </script>

@@ -387,6 +387,12 @@ const status = (stat) => {
         status: 'Pending'
     };
     switch (stat) {
+        case 4:
+            statuss = {
+                color: 'red',
+                status: 'Terminated'
+            };
+            break;
         case 3:
             statuss = {
                 color: 'orange',
@@ -394,8 +400,8 @@ const status = (stat) => {
             };
             break;
         case 2:
-           statuss = {
-                 color: 'red',
+            statuss = {
+                color: 'rose',
                 status: 'Rejected'
             };
             break;
@@ -405,7 +411,11 @@ const status = (stat) => {
                 status: 'Approved'
             };
             break;
-            
+        default:
+            statuss = {
+                color: 'blue',
+                status: 'Pending'
+            };
     }
    
     return statuss;

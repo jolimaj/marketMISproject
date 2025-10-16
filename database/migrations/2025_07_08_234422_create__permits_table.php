@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->integer('form_detail_id')->nullable();
             $table->integer('type')->default(1); // 1 - New, 2-Renewal
-            $table->integer('status')->default(0);//0-pending,1- approved, 2-rejected, 3- expired
+            $table->integer('status')->default(0);//0-pending,1- approved, 2-rejected, 3- expired 4Close
             $table->text('remarks')->nullable(); // require when status is rejected
             $table->string('permit_number')->nullable();
             $table->string('issued_date')->nullable();

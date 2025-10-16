@@ -239,6 +239,12 @@ const status = (stat) => {
         status: 'Vacant'
     };
     switch (stat) {
+        case 4:
+            statuss = {
+                color: 'red',
+                status: 'Terminated'
+            };
+            break;
         case 3:
             statuss = {
                 color: 'orange',
@@ -247,7 +253,7 @@ const status = (stat) => {
             break;
         case 2:
             statuss = {
-                color: 'red',
+                color: 'rose',
                 status: 'Rejected'
             };
             break;

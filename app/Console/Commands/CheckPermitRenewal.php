@@ -30,11 +30,11 @@ class CheckPermitRenewal extends Command
     {
         $threeYearsAgo = $today->copy()->subYears(3);
 
-        $stallRentals = StallRental::with('permits')->whereDate('issue_date', '<=', $threeYearsAgo)
+        $stallRentals = StallRental::with('permits')->whereDate('issued_date', '<=', $threeYearsAgo)
             ->where('type', 1)
             ->get();
 
-        $tableRentals = TableRental::with('permits')->whereDate('issue_date', '<=', $threeYearsAgo)
+        $tableRentals = TableRental::with('permits')->whereDate('issued_date', '<=', $threeYearsAgo)
             ->where('type', 1)
             ->get();
 
@@ -51,7 +51,7 @@ class CheckPermitRenewal extends Command
     {
         $oneYearAgo = $today->copy()->subYear();
 
-        $volanteRentals = Volante::with('permits')->whereDate('issue_date', '<=', $oneYearAgo)
+        $volanteRentals = Volante::with('permits')->whereDate('issued_date', '<=', $oneYearAgo)
             ->where('type', 1)
             ->get();
 
@@ -64,7 +64,7 @@ class CheckPermitRenewal extends Command
     {
         $rental->update(['renewal_notified_at' => now()]);
 
-        $message = "Your {$type} (ID: {$rental->id}) issued on {$rental->issue_date} is due for renewal.";
+        $message = "Your {$type} (ID: {$rental->id}) issued on {$rental->issued_date} is due for renewal.";
 
         if ($rental->mobile) {
             $this->sendSms($rental->mobile, $message);
